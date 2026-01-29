@@ -59,7 +59,7 @@ file_path = '/home/victormoraes/MEGA/Archive/PD FFCLRP-USP/data_PD_Neuromat/TEPs
 # file_path = '/home/victormoraes/MEGA/Archive/PD FFCLRP-USP/data_PD_Neuromat/Piloto_13-10-25/120_Limiar_50_pulsos.bdf'      # Pilot 4
 # file_path = '/home/victormoraes/MEGA/Archive/PD FFCLRP-USP/data_PD_Neuromat/Piloto_24-10-25/com_ruido.bdf'                 # Pilot 5
 # file_path = '/home/victormoraes/MEGA/Archive/PD FFCLRP-USP/data_PD_Neuromat/Piloto_7-11-25/120MT_50P.bdf'                    # Pilot 6
-file_path = '/home/victormoraes/Downloads/test_triggers.bdf'
+file_path = '/home/victormoraes/Downloads/test_trigger2.bdf'
 
 raw = mne.io.read_raw_bdf(file_path, preload=True)
 
