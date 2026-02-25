@@ -15,8 +15,8 @@ import pandas as pd
 import seaborn as sns
 from mne.preprocessing import ICA
 from mne_icalabel import label_components
-from src.modules import plot_functions as pf
-from src.modules import processing_functions as pcf
+from old_versions import plot_functions as pf
+from old_versions import processing_functions as pcf
 
 '''
 Order of steps

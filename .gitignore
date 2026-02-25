@@ -21,6 +21,8 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+*.pyc
+.python-version
 
 # Virtual Environments
 venv/
@@ -46,6 +48,7 @@ ipython_config.py
 
 # Neuroscience / Data Files (Large files)
 # EEG / MEG
+data/
 *.bdf
 *.edf
 *.eeg
