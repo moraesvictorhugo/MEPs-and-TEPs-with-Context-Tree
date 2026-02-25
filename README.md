@@ -11,10 +11,11 @@ tms_eeg_analysis/
 ├── src/
 │   └── tms_eeg/
 │       ├── __init__.py
-│       ├── io.py             # File loading and saving
-│       ├── preprocessing.py  # Filtering, artifact removal, ICA, etc.
-│       ├── processing.py     # TEP extraction, TMS-related analysis
-│       └── plotting.py       # All visualization functions
+│       ├── config/           # Configuration files
+│       ├── io/               # File loading and saving
+│       ├── preprocessing/    # Filtering, artifact removal, ICA, etc.
+│       ├── analysis/         # TEP extraction, TMS-related analysis
+│       └── visualization/    # All visualization functions
 │
 ├── notebooks/                # Jupyter notebooks for exploration
 │
@@ -28,3 +29,25 @@ tms_eeg_analysis/
 ├── main.py                   # Entry point / pipeline runner
 ├── pyproject.toml            # Project metadata and dependencies
 └── README.md
+
+# Overal data flow
+
+Raw File
+   │
+   ▼
+EEGReader.load_raw()
+   │
+   ▼
+PreprocessingPipeline.run()
+   ├── ArtifactRemover.remove_tms_pulse()
+   ├── EEGFilter.bandpass() + notch()
+   ├── ArtifactRemover.run_ica() / apply_ica()
+   └── EEGEpocher.create_epochs() + apply_baseline()
+   │
+   ▼
+mne.Epochs
+   ├──► TEPAnalyzer.compute_erp() ──► TEPPlotter
+   └──► TFRAnalyzer.compute_tfr() ──► TEPPlotter
+   |
+   ▼
+Export data (figures and csv files)
