@@ -7,16 +7,16 @@ import mne
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
-matplotlib.use('Qt5Agg') # TkAgg
+matplotlib.use('TkAgg') # TkAgg
 from scipy.signal import butter, iirnotch, sosfilt, zpk2sos
 from scipy import signal
 import os
 import pandas as pd
-import seaborn as sns
+#import seaborn as sns
 from mne.preprocessing import ICA
-from mne_icalabel import label_components
-from old_versions import plot_functions as pf
-from old_versions import processing_functions as pcf
+# from mne_icalabel import label_components
+# from old_versions import plot_functions as pf
+# from old_versions import processing_functions as pcf
 
 '''
 Order of steps
@@ -59,7 +59,7 @@ file_path = '/home/victormoraes/MEGA/Archive/PD FFCLRP-USP/data_PD_Neuromat/TEPs
 # file_path = '/home/victormoraes/MEGA/Archive/PD FFCLRP-USP/data_PD_Neuromat/Piloto_13-10-25/120_Limiar_50_pulsos.bdf'      # Pilot 4
 # file_path = '/home/victormoraes/MEGA/Archive/PD FFCLRP-USP/data_PD_Neuromat/Piloto_24-10-25/com_ruido.bdf'                 # Pilot 5
 # file_path = '/home/victormoraes/MEGA/Archive/PD FFCLRP-USP/data_PD_Neuromat/Piloto_7-11-25/120MT_50P.bdf'                    # Pilot 6
-file_path = '/home/victormoraes/Downloads/test_trigger2.bdf'
+file_path = 'data/raw/V00test_data/com_ruido.bdf'
 
 raw = mne.io.read_raw_bdf(file_path, preload=True)
 
@@ -79,8 +79,7 @@ raw.set_channel_types({'EMG': 'emg', 'EOG': 'eog'})  # Adjust names for Pilot 1
 # raw.set_channel_types({'emg': 'emg', 'eog': 'eog'})    # Adjust names for Pilot 2 and 3
 
 # Drop non EEG channels
-bad_ch =['P1', 'F2', 'F1', 'T8', 'TP8', 'TP7', 'TP9', 'PO8', 'PO7', 'FT8', 'FT7', 'P6', 'AF7', 'F5', 'F6', 'F8', 'C5', 'C6', 'FC4', 
-                'FC6', 'CP4', 'PO3', 'PO4', 'CP3', 'POz', 'AF8', 'C1', 'FC3', 'Oz', 'CPz', 'AF4', 'AF3', 'P5', 'Fpz', 'P2', 'C2']
+bad_ch =['O1', 'O2', 'TP9', 'TP10']  # Adjust based on your montage and data quality
 raw.drop_channels(bad_ch)    
 raw.drop_channels(['EMG', 'EOG'])  
 

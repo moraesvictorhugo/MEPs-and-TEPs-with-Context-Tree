@@ -21,7 +21,7 @@ class EventConfig:
 @dataclass
 class ArtifactConfig:
     window_removal_artifact: tuple = (-0.010, 0.008)
-    mode_removal_artifact: str = 'linear'
+    mode_removal_artifact: str = 'linear' # 'cubic'
 
 @dataclass
 class FilterConfig:
@@ -34,13 +34,17 @@ class FilterConfig:
 class ChannelConfig:
     eeg_reference: str = 'average'
     remove_bad_channels: bool = True
-    bad_channels: tuple = ('TP9', 'TP10', 'Oz', 'O1', 'O2')
+    bad_channels: tuple = ('TP9', 'TP10', 'O1', 'O2', 'Iz')
 
 @dataclass
 class EpochConfig:
     window: tuple = (-0.8, 0.8)
     downsample: bool = True
     downsample_freq: float = 725.0
+    rejection_amplitude_threshold: dict = field(default_factory=lambda: {
+        'eeg': 50e-6, 'eog': 100e-6})               # 50 and 100 microvolts
+    rejection_flat_threshold: dict = field(
+        default_factory=lambda: {'eeg': 1e-6})      # 1 microvolts
 
 @dataclass
 class ICAConfig:

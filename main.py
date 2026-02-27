@@ -1,6 +1,8 @@
 from src.tms_eeg.config.settings import ProjectConfig
 from src.tms_eeg.io.reader import load_raw
 from src.tms_eeg.preprocessing.epoching import EEGEpocher
+from src.tms_eeg.preprocessing.artifacts import ArtifactRemover
+from src.tms_eeg.preprocessing.filtering import EEGFilter
 
 # temp
 import matplotlib.pyplot as plt
@@ -28,31 +30,50 @@ Steps
     PCIst
 '''
 
-# Settings
-config = ProjectConfig(subject_id="V00test")   # used to develop
+def main():
+    # Settings
+    config = ProjectConfig(subject_id="V00test")   # used to develop
 
-# Load data
-raw = load_raw(config)  # should use load_raw instead
+    # Load data
+    raw_data = load_raw(config)  # should use load_raw instead
 
-# Find/create events
-epocher = EEGEpocher(config)
-epochs = epocher.create_epochs(raw)
+    # Find events / create epochs
+    epocher = EEGEpocher(config)
 
-# Drop unused channels
-epochs.drop_channels(config.channels.bad_channels)
+    # Drop unused channels
+    raw_data.drop_channels(config.channels.bad_channels)
 
-# Artifact removal
+    # Artifact removal
+    raw_data = ArtifactRemover(config).remove_tms_artifact(raw_data)
+
+    # # Filter raw EEG data
+    filtered_data = EEGFilter(config).bp_filter(raw_data)
+
+    # Create epochs
+    epochs = epocher.create_epochs(filtered_data)
+
+    # Set average reference
+    epochs.set_eeg_reference(config.channels.eeg_reference)
+    
+    # Remove bad and epochs (manual or threshold=3)
+    epochs = EEGEpocher.reject_bad(
+        epochs,
+        thresholds=config.epochs.rejection_amplitude_threshold,
+        flat_thresholds=config.epochs.rejection_flat_threshold
+        )
+    
+    # 
 
 
 
 
+    # # Access
+    # config.filters.bandpass        # [1, 250]
+    # config.ica.run_ica             # True
+    # config.channels.bad_channels   # ['TP9', 'TP10', 'Oz', 'O1', 'O2']
 
-
-
-# Access
-config.filters.bandpass        # [1, 250]
-config.ica.run_ica             # True
-config.channels.bad_channels   # ['TP9', 'TP10', 'Oz', 'O1', 'O2']
-
-# Override one value
-config.epochs.downsample_freq = 500.0
+    # # Override one value
+    # config.epochs.downsample_freq = 500.0
+    
+if __name__ == "__main__":
+    main()
