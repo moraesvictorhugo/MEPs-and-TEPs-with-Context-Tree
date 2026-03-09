@@ -20,7 +20,7 @@ class EventConfig:
 
 @dataclass
 class ArtifactConfig:
-    window_removal_artifact: tuple = (-0.010, 0.010)
+    window_removal_artifact: tuple = (-0.005, 0.008)
     mode_removal_artifact: str = 'linear' # 'cubic'
 
 @dataclass
@@ -51,7 +51,6 @@ class ICAConfig:
     run_ica: bool = True
     plot_components: bool = True
     use_ica_label: bool = False
-    components_to_remove: tuple = (3, 4, 6) # to fills in
 
 @dataclass
 class AnalysisConfig:

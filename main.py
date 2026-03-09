@@ -36,7 +36,7 @@ Steps
 config = ProjectConfig(subject_id="V00test")   # used to develop
 
 # Load data
-raw_data = load_raw(config)  # should use load_raw instead
+raw_data = load_raw(config)
 
 # Find events / create epochs
 epocher = EEGEpocher(config)
@@ -44,10 +44,10 @@ epocher = EEGEpocher(config)
 # Drop unused channels
 raw_data.drop_channels(config.channels.bad_channels)
 
-# Artifact removal  ->>> not working properly (use event_id number)
+# Artifact removal
 raw_data = ArtifactRemover(config).remove_tms_artifact(raw_data) 
 
-# # Filter raw EEG data
+# Filter raw EEG data
 filtered_data = EEGFilter(config).bp_filter(raw_data)
 
 # Create epochs
@@ -55,6 +55,9 @@ epochs = epocher.create_epochs(filtered_data)
 
 # Set average reference
 epochs.set_eeg_reference(config.channels.eeg_reference)
+
+# Check channels and epochs to remove
+epochs.plot()
 
 # Remove bad and epochs (manual or threshold=3) -> not working properly
 # epochs = EEGEpocher.reject_bad(
@@ -66,7 +69,7 @@ epochs.set_eeg_reference(config.channels.eeg_reference)
 # Fast ICA
 ica_processor = EEGICA(config)
 ica_processor.fit_ica(epochs)
-epochs = ica_processor.apply_ica(epochs)
+epochs = ica_processor.apply_ica(epochs, components_to_remove=[3, 4, 6])
 
 # Optional: Plot components for manual inspection
 if config.ica.plot_components:

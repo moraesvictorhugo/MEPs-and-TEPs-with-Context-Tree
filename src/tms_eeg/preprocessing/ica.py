@@ -31,12 +31,7 @@ class EEGICA:
             return epochs
             
         # Apply ICA with configured components to remove
-        if components_to_remove is None:
-            components_to_remove = self.config.ica.components_to_remove
-            self.ica.exclude = components_to_remove
-            
-        else:
-            self.ica.exclude = components_to_remove 
+        self.ica.exclude = components_to_remove 
             
         epochs_clean = self.ica.apply(epochs.copy())
         return epochs_clean
