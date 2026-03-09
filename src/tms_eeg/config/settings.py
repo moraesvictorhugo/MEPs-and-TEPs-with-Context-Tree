@@ -20,7 +20,7 @@ class EventConfig:
 
 @dataclass
 class ArtifactConfig:
-    window_removal_artifact: tuple = (-0.010, 0.008)
+    window_removal_artifact: tuple = (-0.010, 0.010)
     mode_removal_artifact: str = 'linear' # 'cubic'
 
 @dataclass
@@ -42,7 +42,7 @@ class EpochConfig:
     downsample: bool = True
     downsample_freq: float = 725.0
     rejection_amplitude_threshold: dict = field(default_factory=lambda: {
-        'eeg': 50e-6, 'eog': 100e-6})               # 50 and 100 microvolts
+        'eeg': 1000e-6, 'eog': 5000e-6})               # 50 and 100 microvolts
     rejection_flat_threshold: dict = field(
         default_factory=lambda: {'eeg': 1e-6})      # 1 microvolts
 
@@ -50,8 +50,8 @@ class EpochConfig:
 class ICAConfig:
     run_ica: bool = True
     plot_components: bool = True
-    use_ica_label: bool = True
-    components_to_remove: list = field(default_factory=list)  # user fills in
+    use_ica_label: bool = False
+    components_to_remove: tuple = (3, 4, 6) # to fills in
 
 @dataclass
 class AnalysisConfig:

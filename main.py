@@ -3,6 +3,7 @@ from src.tms_eeg.io.reader import load_raw
 from src.tms_eeg.preprocessing.epoching import EEGEpocher
 from src.tms_eeg.preprocessing.artifacts import ArtifactRemover
 from src.tms_eeg.preprocessing.filtering import EEGFilter
+from src.tms_eeg.preprocessing.ica import EEGICA
 
 # temp
 import matplotlib.pyplot as plt
@@ -30,50 +31,58 @@ Steps
     PCIst
 '''
 
-def main():
-    # Settings
-    config = ProjectConfig(subject_id="V00test")   # used to develop
+#def main():
+# Settings
+config = ProjectConfig(subject_id="V00test")   # used to develop
 
-    # Load data
-    raw_data = load_raw(config)  # should use load_raw instead
+# Load data
+raw_data = load_raw(config)  # should use load_raw instead
 
-    # Find events / create epochs
-    epocher = EEGEpocher(config)
+# Find events / create epochs
+epocher = EEGEpocher(config)
 
-    # Drop unused channels
-    raw_data.drop_channels(config.channels.bad_channels)
+# Drop unused channels
+raw_data.drop_channels(config.channels.bad_channels)
 
-    # Artifact removal
-    raw_data = ArtifactRemover(config).remove_tms_artifact(raw_data)
+# Artifact removal  ->>> not working properly (use event_id number)
+raw_data = ArtifactRemover(config).remove_tms_artifact(raw_data) 
 
-    # # Filter raw EEG data
-    filtered_data = EEGFilter(config).bp_filter(raw_data)
+# # Filter raw EEG data
+filtered_data = EEGFilter(config).bp_filter(raw_data)
 
-    # Create epochs
-    epochs = epocher.create_epochs(filtered_data)
+# Create epochs
+epochs = epocher.create_epochs(filtered_data)
 
-    # Set average reference
-    epochs.set_eeg_reference(config.channels.eeg_reference)
+# Set average reference
+epochs.set_eeg_reference(config.channels.eeg_reference)
+
+# Remove bad and epochs (manual or threshold=3) -> not working properly
+# epochs = EEGEpocher.reject_bad(
+#     epochs,
+#     thresholds=config.epochs.rejection_amplitude_threshold,
+#     flat_thresholds=config.epochs.rejection_flat_threshold
+#     )
+
+# Fast ICA
+ica_processor = EEGICA(config)
+ica_processor.fit_ica(epochs)
+epochs = ica_processor.apply_ica(epochs)
+
+# Optional: Plot components for manual inspection
+if config.ica.plot_components:
+    ica_processor.plot_components(epochs)
+
+
+
+
+
+# # Access
+# config.filters.bandpass        # [1, 250]
+# config.ica.run_ica             # True
+# config.channels.bad_channels   # ['TP9', 'TP10', 'Oz', 'O1', 'O2']
+
+# # Override one value
+# config.epochs.downsample_freq = 500.0
     
-    # Remove bad and epochs (manual or threshold=3)
-    epochs = EEGEpocher.reject_bad(
-        epochs,
-        thresholds=config.epochs.rejection_amplitude_threshold,
-        flat_thresholds=config.epochs.rejection_flat_threshold
-        )
-    
-    # 
-
-
-
-
-    # # Access
-    # config.filters.bandpass        # [1, 250]
-    # config.ica.run_ica             # True
-    # config.channels.bad_channels   # ['TP9', 'TP10', 'Oz', 'O1', 'O2']
-
-    # # Override one value
-    # config.epochs.downsample_freq = 500.0
-    
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
