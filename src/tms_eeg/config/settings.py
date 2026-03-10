@@ -17,6 +17,10 @@ class EventConfig:
     })
     trigger_id: dict = field(default_factory=lambda: {'Stimulus A': 1})
     trigger_8bits: tuple = (1, 2, 3)
+    stimulus_to_8bit_mapping: dict = field(default_factory=lambda: {
+        'Stimulus A': ['8bits 1', '8bits 2', '8bits 3']
+    })
+    use_8bit_triggers: bool = False  # New field to control behavior
 
 @dataclass
 class ArtifactConfig:
@@ -35,6 +39,9 @@ class ChannelConfig:
     eeg_reference: str = 'average'
     remove_bad_channels: bool = True
     bad_channels: tuple = ('TP9', 'TP10', 'O1', 'O2', 'Iz')
+    eog_label: str = 'EOG'
+    emg_label: str = 'EMG'
+    eeg_montage: str = 'standard_1020'
 
 @dataclass
 class EpochConfig:
