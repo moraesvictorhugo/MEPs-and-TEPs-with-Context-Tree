@@ -7,7 +7,8 @@ from src.tms_eeg.preprocessing.filtering import Filter
 from src.tms_eeg.preprocessing.ica import EEGICA
 from src.tms_eeg.preprocessing.downsampling import Downsampler
 from src.tms_eeg.preprocessing.annotation_processor import AnnotationProcessor
-
+from src.tms_eeg.visualization.tep_plots import TEPPlotter
+from src.tms_eeg.visualization.emg_plots import EMGPlotter
 
 # temp
 import matplotlib
@@ -59,17 +60,17 @@ filtered_data = Filter(config).eeg_bp_filter(raw_data)
 filtered_data = Filter(config).emg_bp_filter(filtered_data)
 filtered_data = Filter(config).notch_filter(filtered_data)
 
-# NEW: Process annotations to replace Stimulus A with condition labels
+# Process annotations to replace Stimulus A with condition labels
 annotation_processor = AnnotationProcessor(config)
 processed_data = annotation_processor.process_annotations(filtered_data)
 
-# Create epochs using standard EEGEpocher (now with condition labels!)
+# Create epochs using standard EEGEpocher
 epochs = epocher.create_epochs(processed_data)
 
 # Set average reference
 epochs.set_eeg_reference(config.channels.eeg_reference)
 
-# Check and remove bad channels
+# Check and remove bad channels -> Manual Action Required
 epochs.plot()
 
 # Interpolate bad channels
@@ -82,7 +83,7 @@ epochs.plot()
 ica_processor = EEGICA(config)
 ica_processor.fit_ica(epochs)
 ica_processor.plot_components(epochs)
-epochs = ica_processor.apply_ica(epochs, components_to_remove=[0, 1, 8, 10, 15])
+epochs = ica_processor.apply_ica(epochs, components_to_remove=[0, 3, 15, 18])
 epochs.plot(block = False)
 
 # Baseline correction
@@ -97,47 +98,19 @@ epochs = Downsampler(config).downsample(epochs)
 # Baseline correction
 epochs.apply_baseline(baseline=(-0.5, -0.01))
 
-# Individual TEP plotting for validation
-for condition in epochs.event_id.keys():
-    evoked = epochs[condition].average(picks='eeg')
-    evoked_emg = epochs[condition].average(picks='emg')
-    evoked.comment = f'TEPs for {condition}'
-    title = f'TEPs - {condition}'
+# # TEP plots
+# tep_plotter = TEPPlotter()
+# tep_plotter.plot_all(epochs)
+
+# # EMG plots
+# emg_plotter = EMGPlotter()
+# emg_plotter.plot_all(epochs)
     
-    # Add condition label to the evoked object
-    evoked.plot(xlim=(-0.02, 0.2))
-    evoked.plot(
-        picks=['C3', 'FC1', 'CP1', 'C4', 'FC5', 'CP5'],
-        titles=f'TEPs for {condition}',
-        xlim=(-0.02, 0.2)
-    )
-    evoked.plot_joint(
-        times=[0.015, 0.03, 0.045, 0.06, 0.1, 0.18],
-        title=title,
-        ts_args=dict(xlim=(-0.02, 0.2))
-    )
-    evoked.plot_image(picks='eeg', xlim=(-0.02, 0.2), show_names='all')
-    evoked.copy().crop(tmin=-0.02, tmax=0.2).animate_topomap(
-        times=[0.015, 0.03, 0.045, 0.06, 0.1, 0.18], frame_rate=1)    
-    evoked.plot(gfp=True, xlim=(-0.02, 0.2))
-    evoked.plot_topomap(
-    times=[0.005, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1],
-    colorbar=True
-    )
-    evoked_crop = evoked.copy().crop(tmin=0.02, tmax=0.2)
-    evoked_crop.plot_topo(
-        ylim=dict(eeg=[-10, 10]),
-        vline=(0.0,),
-        title=f'TEPs por canal - {condition}',
-        color='blue',
-        background_color='white'    
-    )
-    
-    # EMG
-    evoked_emg.plot(xlim=(-0.01, 0.08), titles=f'EMG - {condition}')
-    
-# Export epochs
+# Export processed data
 writer = EEGWriter(config)
+writer.save_raw(processed_data)
+
+# Export epochs
 writer.save_epochs(epochs, 'processed')
 
 # Export average evoked

@@ -51,7 +51,7 @@ class TextFileParser:
                 for line in f:
                     line = line.strip()
                     if line:  # Skip empty lines
-                        conditions.append(f"8bits {line}")
+                        conditions.append(f"8bits {int(line) +1}")
             
             return conditions
             

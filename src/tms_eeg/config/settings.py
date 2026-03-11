@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 
 @dataclass
 class IOConfig:
-    export_data: bool = False
+    export_data: bool = True
     change_channel_types: bool = False
     new_channel_names: dict = field(default_factory=dict)  # {"EEG 001": "Fp1"}
 
