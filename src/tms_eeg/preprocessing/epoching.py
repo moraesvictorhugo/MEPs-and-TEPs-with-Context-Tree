@@ -57,7 +57,7 @@ class EEGEpocher:
             event_id=event_id,
             tmin=epoch_cfg.window[0],
             tmax=epoch_cfg.window[1],
-            baseline=None,
+            baseline=epoch_cfg.baseline,
             preload=True,
             reject=None,
             flat=None,

@@ -47,6 +47,7 @@ class ChannelConfig:
 @dataclass
 class EpochConfig:
     window: tuple = (-0.8, 0.8)
+    baseline: tuple = (-0.5, -0.01)  # ou None para desativar
     downsample: bool = True
     downsample_freq: float = 725.0
     rejection_amplitude_threshold: dict = field(default_factory=lambda: {
