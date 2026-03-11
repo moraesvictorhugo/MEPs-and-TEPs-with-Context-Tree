@@ -1,3 +1,6 @@
+import mne
+
+
 class EEGPlotter:
     def plot_raw(self, raw: mne.io.Raw) -> None: ...
     def plot_epochs(self, epochs: mne.Epochs) -> None: ...

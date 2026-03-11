@@ -21,7 +21,7 @@ class TEPPlotter:
         
     def plot_butterfly(self, evoked: mne.Evoked, title: str = None) -> None:
         """Plot butterfly plot for evoked data."""
-        evoked.plot(spatial_colors='group', gfp=True, titles=title)
+        evoked.plot(spatial_colors='group', gfp=True, title=title)
     
     def plot_component_latencies(self, components: dict) -> None:
         """Plot component latencies."""

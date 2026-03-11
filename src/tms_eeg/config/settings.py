@@ -21,6 +21,7 @@ class EventConfig:
         'Stimulus A': ['8bits 1', '8bits 2', '8bits 3']
     })
     use_8bit_triggers: bool = False  # New field to control behavior
+    text_file_pattern: str = "*.txt"  # Pattern to find condition files
 
 @dataclass
 class ArtifactConfig:

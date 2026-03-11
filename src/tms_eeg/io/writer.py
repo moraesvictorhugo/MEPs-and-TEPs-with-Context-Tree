@@ -1,3 +1,6 @@
+import mne
+
+
 class EEGWriter:
     def save_raw(self, raw: mne.io.Raw, filepath: str) -> None: ...
     def save_epochs(self, epochs: mne.Epochs, filepath: str) -> None: ...

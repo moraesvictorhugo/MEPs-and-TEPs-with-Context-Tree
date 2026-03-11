@@ -1,3 +1,6 @@
+import mne
+
+
 class TFRAnalyzer:
     def compute_tfr(self, epochs: mne.Epochs) -> mne.time_frequency.AverageTFR: ...
     def compute_erds(self, tfr: mne.time_frequency.AverageTFR) -> mne.time_frequency.AverageTFR: ...
