@@ -30,10 +30,11 @@ class ArtifactConfig:
 
 @dataclass
 class FilterConfig:
-    bandpass: tuple = (1, 250)
+    eeg_bandpass: tuple = (1, 250)
+    emg_bandpass: tuple = (10, 400)
     notch: tuple = (60, 120, 180, 240, 300)
-    filter_epoched_data: bool = True
-    bandpass_epochs: tuple = (None, 45)
+    eeg_filter_epoched_data: bool = True
+    eeg_bandpass_epochs: tuple = (None, 45)
 
 @dataclass
 class ChannelConfig:

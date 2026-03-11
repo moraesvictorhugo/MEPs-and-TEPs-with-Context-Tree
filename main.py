@@ -3,14 +3,13 @@ from src.tms_eeg.io.reader import load_raw
 from src.tms_eeg.io.writer import EEGWriter
 from src.tms_eeg.preprocessing.epoching import EEGEpocher
 from src.tms_eeg.preprocessing.artifacts import ArtifactRemover
-from src.tms_eeg.preprocessing.filtering import EEGFilter
+from src.tms_eeg.preprocessing.filtering import Filter
 from src.tms_eeg.preprocessing.ica import EEGICA
 from src.tms_eeg.preprocessing.downsampling import Downsampler
 from src.tms_eeg.preprocessing.annotation_processor import AnnotationProcessor
 
 
 # temp
-import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('TkAgg')
 
@@ -56,8 +55,9 @@ raw_data.drop_channels(config.channels.bad_channels)
 raw_data = ArtifactRemover(config).remove_tms_artifact(raw_data) 
 
 # Filter raw EEG data
-filtered_data = EEGFilter(config).bp_filter(raw_data)
-filtered_data = EEGFilter(config).notch_filter(filtered_data)
+filtered_data = Filter(config).eeg_bp_filter(raw_data)
+filtered_data = Filter(config).emg_bp_filter(filtered_data)
+filtered_data = Filter(config).notch_filter(filtered_data)
 
 # NEW: Process annotations to replace Stimulus A with condition labels
 annotation_processor = AnnotationProcessor(config)
@@ -89,7 +89,7 @@ epochs.plot(block = False)
 epochs.apply_baseline(baseline=(-0.5, -0.01))
 
 # Filter epoched data
-epochs = EEGFilter(config).bp_filter_epoch(epochs)
+epochs = Filter(config).eeg_bp_filter_epoch(epochs)
 
 # Downsampling
 epochs = Downsampler(config).downsample(epochs)
@@ -99,7 +99,8 @@ epochs.apply_baseline(baseline=(-0.5, -0.01))
 
 # Individual TEP plotting for validation
 for condition in epochs.event_id.keys():
-    evoked = epochs[condition].average()
+    evoked = epochs[condition].average(picks='eeg')
+    evoked_emg = epochs[condition].average(picks='emg')
     evoked.comment = f'TEPs for {condition}'
     title = f'TEPs - {condition}'
     
@@ -123,7 +124,7 @@ for condition in epochs.event_id.keys():
     times=[0.005, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1],
     colorbar=True
     )
-    evoked_crop = evoked.crop(tmin=0.02, tmax=0.2)
+    evoked_crop = evoked.copy().crop(tmin=0.02, tmax=0.2)
     evoked_crop.plot_topo(
         ylim=dict(eeg=[-10, 10]),
         vline=(0.0,),
@@ -131,7 +132,10 @@ for condition in epochs.event_id.keys():
         color='blue',
         background_color='white'    
     )
-
+    
+    # EMG
+    evoked_emg.plot(xlim=(-0.01, 0.08), titles=f'EMG - {condition}')
+    
 # Export epochs
 writer = EEGWriter(config)
 writer.save_epochs(epochs, 'processed')
