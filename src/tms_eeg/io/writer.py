@@ -141,10 +141,10 @@ class EEGWriter:
             self.save_evoked(evoked, subfolder, condition)
         
         # Also save grand average across all conditions
-        grand_average = mne.grand_average(evoked_list)  # type: ignore
+        grand_average = mne.grand_average(evoked_list)
         if hasattr(grand_average, 'comment'):
-            grand_average.comment = 'Grand average TEPs'  # type: ignore
-        self.save_evoked(grand_average, subfolder, "grand_average")  # type: ignore
+            grand_average.comment = 'Grand average TEPs'
+        self.save_evoked(grand_average, subfolder, "grand_average")
         
         print(f"All evoked responses saved successfully!")
         
@@ -194,8 +194,8 @@ class EEGWriter:
         figures_dir.mkdir(exist_ok=True)
         return figures_dir
 
-    def save_figure(self, fig: Figure, name: str, subfolder: str = "figures",
-                    fmt: str = "png", dpi: int = 300) -> None:
+    def save_figure(self, fig: Figure, name: str, subfolder: str = None,
+                    fmt: str = None, dpi: int = None) -> None:
         """
         Save a single matplotlib figure.
         
@@ -206,22 +206,30 @@ class EEGWriter:
         name : str
             Descriptive name for the file (e.g., 'butterfly_8bits_1')
         subfolder : str
-            Subfolder within processed directory (default: 'figures')
+            Subfolder within processed directory (default: from config)
         fmt : str
-            Image format (default: 'png')
+            Image format (default: from config)
         dpi : int
-            Resolution (default: 300)
+            Resolution (default: from config)
         """
         if not self.config.io.export_data:
             print("Export skipped: export_data is set to False in configuration")
             return
         
-        figures_dir = self._create_figures_dir(subfolder)
-        filename = self._get_filename(name, "plot", extension=f".{fmt}")
-        full_path = figures_dir / filename
+        # Use config defaults if not provided
+        subfolder = subfolder or (self.config.plots.figure_subfolder if hasattr(self.config, 'plots') and hasattr(self.config.plots, 'figure_subfolder') else "figures")
+        fmt = fmt or (self.config.plots.figure_format if hasattr(self.config, 'plots') and hasattr(self.config.plots, 'figure_format') else "png")
+        dpi = dpi or (self.config.plots.figure_dpi if hasattr(self.config, 'plots') and hasattr(self.config.plots, 'figure_dpi') else 300)
         
-        fig.savefig(full_path, dpi=dpi, bbox_inches='tight')
-        print(f"Figure saved: {full_path}")
+        try:
+            figures_dir = self._create_figures_dir(subfolder)
+            filename = self._get_filename(name, "plot", extension=f".{fmt}")
+            full_path = figures_dir / filename
+            
+            fig.savefig(full_path, dpi=dpi, bbox_inches='tight')
+            print(f"Figure saved: {full_path}")
+        except Exception as e:
+            print(f"Error saving figure '{name}': {e}")
 
     def save_all_open_figures(self, prefix: str = "fig", subfolder: str = "figures",
                             fmt: str = "png", dpi: int = 300) -> None:

@@ -98,16 +98,18 @@ epochs = Downsampler(config).downsample(epochs)
 # Baseline correction
 epochs.apply_baseline(baseline=(-0.5, -0.01))
 
-# # TEP plots
-# tep_plotter = TEPPlotter()
-# tep_plotter.plot_all(epochs)
+# Create shared writer for better performance
+writer = EEGWriter(config)
 
-# # EMG plots
-# emg_plotter = EMGPlotter()
-# emg_plotter.plot_all(epochs)
+# TEP plots
+tep_plotter = TEPPlotter(config=config, writer=writer)
+tep_plotter.plot_all(epochs)
+
+# EMG plots
+emg_plotter = EMGPlotter(config=config, writer=writer)
+emg_plotter.plot_all(epochs)
     
 # Export processed data
-writer = EEGWriter(config)
 writer.save_raw(processed_data)
 
 # Export epochs

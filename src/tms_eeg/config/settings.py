@@ -7,6 +7,7 @@ class IOConfig:
     export_data: bool = True
     change_channel_types: bool = False
     new_channel_names: dict = field(default_factory=dict)  # {"EEG 001": "Fp1"}
+    save_figs: bool = True
 
 @dataclass
 class EventConfig:
@@ -77,6 +78,24 @@ class PlotConfig:
     plot_epochs: bool = True
     plot_teps_by_stimulus: bool = True
     plot_ica_components: bool = True
+    # Figure saving options
+    figure_format: str = "png"
+    figure_dpi: int = 300
+    figure_subfolder: str = "figures"
+    # TEP plotting options
+    tep_xlim: tuple = (-0.02, 0.2)
+    tep_topo_times: list = field(default_factory=lambda: [
+        0.005, 0.01, 0.02, 0.03, 0.04, 0.05,
+        0.06, 0.07, 0.08, 0.09, 0.1
+    ])
+    tep_joint_times: list = field(default_factory=lambda: [
+        0.015, 0.03, 0.045, 0.06, 0.1, 0.18
+    ])
+    tep_roi_channels: list = field(default_factory=lambda: [
+        'C3', 'FC1', 'CP1', 'C4', 'FC5', 'CP5'
+    ])
+    # EMG plotting options
+    emg_xlim: tuple = (-0.01, 0.08)
 
 @dataclass
 class ProjectConfig:
