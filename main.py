@@ -1,3 +1,8 @@
+# Set backend
+from src.tms_eeg.config.environment import setup_plotting_backend
+setup_plotting_backend()
+
+# Imports
 from src.tms_eeg.config.settings import ProjectConfig
 from src.tms_eeg.io.reader import load_raw
 from src.tms_eeg.io.writer import EEGWriter
@@ -9,10 +14,6 @@ from src.tms_eeg.preprocessing.downsampling import Downsampler
 from src.tms_eeg.preprocessing.annotation_processor import AnnotationProcessor
 from src.tms_eeg.visualization.tep_plots import TEPPlotter
 from src.tms_eeg.visualization.emg_plots import EMGPlotter
-
-# temp
-import matplotlib
-matplotlib.use('TkAgg')
 
 '''
 Steps
@@ -36,7 +37,7 @@ Steps
 '''
 
 # Settings
-config = ProjectConfig(subject_id="V00test")   # used to develop
+config = ProjectConfig(subject_id="V02")
 
 # Load data
 raw_data = load_raw(config)
@@ -54,6 +55,8 @@ raw_data.drop_channels(config.channels.bad_channels)
 
 # Artifact removal
 raw_data = ArtifactRemover(config).remove_tms_artifact(raw_data) 
+
+raw_data.plot()
 
 # Filter raw EEG data
 filtered_data = Filter(config).eeg_bp_filter(raw_data)
