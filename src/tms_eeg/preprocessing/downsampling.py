@@ -12,9 +12,9 @@ class Downsampler:
         return resampled
 
     def downsample_emg_channels(self, epochs) -> 'mne.Epochs':
-        """Extract EMG channels and downsample them at 3000 Hz."""
+        """Extract EMG channels and downsample them to the configured EMG frequency."""
         # Extract only EMG channels
-        emg_epochs = epochs.copy().pick_types(emg=True)
+        emg_epochs = epochs.copy().pick('emg')
         # Downsample at EMG frequency
         resampled = emg_epochs.resample(self.config.epochs.emg_downsample_freq)
         return resampled

@@ -37,7 +37,7 @@ Steps
 '''
 
 # Settings
-config = ProjectConfig(subject_id="V00test")
+config = ProjectConfig(subject_id="V02")
 
 # Load data
 raw_data = load_raw(config)
@@ -68,7 +68,7 @@ processed_data = annotation_processor.process_annotations(filtered_data)
 # Create epochs using standard EEGEpocher
 epochs = epocher.create_epochs(processed_data)
 
-# Create shared writer for better performance
+# Writer initialization
 writer = Writer(config)
 
 # Downsampling EMG and export epochs of emg

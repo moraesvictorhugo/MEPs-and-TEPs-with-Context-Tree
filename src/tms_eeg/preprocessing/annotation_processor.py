@@ -94,7 +94,7 @@ class AnnotationProcessor:
             # Look for 8-bit trigger annotations
             annotations = raw.annotations
             trigger_annotations = [desc for desc in annotations.description 
-                                 if desc.startswith('8bits')]
+                                 if desc.startswith('8bit')]
             
             return len(trigger_annotations) > 0
             
