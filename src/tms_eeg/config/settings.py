@@ -52,6 +52,7 @@ class EpochConfig:
     baseline: tuple = (-0.5, -0.01)  # ou None para desativar
     downsample: bool = True
     downsample_freq: float = 725.0
+    emg_downsample_freq: float = 3000.0
     rejection_amplitude_threshold: dict = field(default_factory=lambda: {
         'eeg': 1000e-6, 'eog': 5000e-6})               # 50 and 100 microvolts
     rejection_flat_threshold: dict = field(

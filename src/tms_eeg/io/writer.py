@@ -5,12 +5,12 @@ from matplotlib.figure import Figure
 from pathlib import Path
 from typing import Union, List
 
-class EEGWriter:
-    """Class for saving EEG data (raw, epochs, evoked) to the processed directory."""
+class Writer:
+    """Class for saving EEG and EMG data (raw, epochs, evoked) to the processed directory."""
     
     def __init__(self, config):
         """
-        Initialize EEGWriter with project configuration.
+        Initialize Writer with project configuration.
         
         Parameters
         ----------
@@ -266,3 +266,29 @@ class EEGWriter:
             print(f"Figure saved: {full_path}")
         
         print(f"Saved {len(fig_nums)} figures.")
+
+    def save_emg_epochs(self, epochs: mne.Epochs, subfolder: str = "emg_processed") -> None:
+        """
+        Save EMG epochs to the processed directory with preserved annotations.
+        
+        Parameters
+        ----------
+        epochs : mne.Epochs
+            EMG epochs object with annotations
+        subfolder : str
+            Subfolder name within processed directory (default: 'emg_processed')
+        """
+        # Check if export is enabled in configuration
+        if not self.config.io.export_data:
+            print("Export skipped: export_data is set to False in configuration")
+            return
+            
+        processed_dir = self._create_processed_dir() / subfolder
+        processed_dir.mkdir(exist_ok=True)
+        
+        filename = self._get_filename("emg_epochs", "processed")
+        full_path = processed_dir / filename
+        
+        print(f"Saving EMG epochs to: {full_path}")
+        epochs.save(full_path, overwrite=True)
+        print(f"EMG epochs saved successfully!")

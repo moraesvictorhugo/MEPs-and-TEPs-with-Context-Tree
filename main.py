@@ -5,7 +5,7 @@ setup_plotting_backend()
 # Imports
 from src.tms_eeg.config.settings import ProjectConfig
 from src.tms_eeg.io.reader import load_raw
-from src.tms_eeg.io.writer import EEGWriter
+from src.tms_eeg.io.writer import Writer
 from src.tms_eeg.preprocessing.epoching import EEGEpocher
 from src.tms_eeg.preprocessing.artifacts import ArtifactRemover
 from src.tms_eeg.preprocessing.filtering import Filter
@@ -37,7 +37,7 @@ Steps
 '''
 
 # Settings
-config = ProjectConfig(subject_id="V02")
+config = ProjectConfig(subject_id="V00test")
 
 # Load data
 raw_data = load_raw(config)
@@ -54,9 +54,7 @@ epocher = EEGEpocher(config)
 raw_data.drop_channels(config.channels.bad_channels)
 
 # Artifact removal
-raw_data = ArtifactRemover(config).remove_tms_artifact(raw_data) 
-
-raw_data.plot()
+raw_data = ArtifactRemover(config).remove_tms_artifact(raw_data)
 
 # Filter raw EEG data
 filtered_data = Filter(config).eeg_bp_filter(raw_data)
@@ -69,6 +67,13 @@ processed_data = annotation_processor.process_annotations(filtered_data)
 
 # Create epochs using standard EEGEpocher
 epochs = epocher.create_epochs(processed_data)
+
+# Create shared writer for better performance
+writer = Writer(config)
+
+# Downsampling EMG and export epochs of emg
+emg_epochs = Downsampler(config).downsample_emg_channels(epochs)
+writer.save_emg_epochs(emg_epochs, 'emg_processed')
 
 # Set average reference
 epochs.set_eeg_reference(config.channels.eeg_reference)
@@ -100,9 +105,6 @@ epochs = Downsampler(config).downsample(epochs)
 
 # Baseline correction
 epochs.apply_baseline(baseline=(-0.5, -0.01))
-
-# Create shared writer for better performance
-writer = EEGWriter(config)
 
 # TEP plots
 tep_plotter = TEPPlotter(config=config, writer=writer)
