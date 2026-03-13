@@ -61,12 +61,12 @@ filtered_data = Filter(config).eeg_bp_filter(raw_data)
 filtered_data = Filter(config).emg_bp_filter(filtered_data)
 filtered_data = Filter(config).notch_filter(filtered_data)
 
-# Process annotations to replace Stimulus A with condition labels
-annotation_processor = AnnotationProcessor(config)
-processed_data = annotation_processor.process_annotations(filtered_data)
+# Create epochs using original "Stimulus A" annotations
+epochs = epocher.create_epochs(filtered_data)
 
-# Create epochs using standard EEGEpocher
-epochs = epocher.create_epochs(processed_data)
+# Process annotations to replace Stimulus A with condition labels in epochs
+annotation_processor = AnnotationProcessor(config)
+epochs = annotation_processor.process_annotations(epochs)
 
 # Writer initialization
 writer = Writer(config)
@@ -114,8 +114,8 @@ tep_plotter.plot_all(epochs)
 emg_plotter = EMGPlotter(config=config, writer=writer)
 emg_plotter.plot_all(epochs)
     
-# Export processed data
-writer.save_raw(processed_data)
+# Export processed data (use the filtered raw data since we're working with epochs now)
+writer.save_raw(filtered_data)
 
 # Export epochs
 writer.save_epochs(epochs, 'processed')
