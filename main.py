@@ -36,6 +36,25 @@ Steps
     PCIst
 '''
 
+# if config.subject_id == "V00test":
+#     import mne
+    
+#     filtered_data.set_annotations(mne.Annotations([], [], []))
+#     # Exemplo: distribui as annotations ao longo do sinal
+#     duration_sec = filtered_data.times[-1]
+#     print(f"Duração total: {duration_sec:.2f} s")
+
+#     # Defina onsets válidos (menores que duration_sec)
+#     my_annotations = mne.Annotations(
+#         onset=[10, 11, 20, 21, 30, 31],   # ← ajuste para valores reais do seu experimento
+#         duration=[0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+#         description=["8Bit 1", "Stimulus A", "8Bit 2", "Stimulus A", "8Bit 3", "Stimulus A"],
+#         orig_time=None
+#     )
+
+#     filtered_data.set_annotations(my_annotations)
+#     print(filtered_data.annotations)
+
 # Settings
 config = ProjectConfig(subject_id="V00test")
 
