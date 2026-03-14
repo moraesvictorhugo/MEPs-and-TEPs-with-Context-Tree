@@ -94,7 +94,7 @@ class AnnotationProcessor:
             # Look for 8-bit trigger annotations
             annotations = raw.annotations
             trigger_annotations = [desc for desc in annotations.description 
-                                 if desc.startswith('8bit')]
+                                 if desc.startswith('8Bit')]
             
             return len(trigger_annotations) > 0
             
@@ -107,9 +107,9 @@ class AnnotationProcessor:
         
         This method finds Stimulus A events and replaces them with the 
         corresponding 8-bit trigger label from the same time window.
+        The matched 8-bit trigger annotations are removed after replacement.
         """
         try:
-            # Get all annotations
             annotations = raw.annotations
             
             # Find Stimulus A events
@@ -129,7 +129,7 @@ class AnnotationProcessor:
             trigger_times = []
             trigger_descriptions = []
             for i, desc in enumerate(annotations.description):
-                if desc.startswith('8bits'):
+                if desc.startswith('8Bit'):
                     trigger_indices.append(i)
                     trigger_times.append(annotations.onset[i])
                     trigger_descriptions.append(desc)
@@ -138,42 +138,57 @@ class AnnotationProcessor:
                 print("No 8-bit trigger events found.")
                 return raw
             
-            # Convert to numpy arrays for easier processing
             stimulus_a_times = np.array(stimulus_a_times)
             trigger_times = np.array(trigger_times)
             
-            # Create new descriptions (start with original)
             new_descriptions = list(annotations.description)
             
-            # For each Stimulus A event, find the closest 8-bit trigger
+            # Track which 8-bit trigger indices (in annotations) were matched
+            matched_trigger_indices = set()
+            
+            tolerance = 0.2  # 200ms
+            
             for i, stim_time in enumerate(stimulus_a_times):
-                # Find 8-bit triggers within ±100ms of Stimulus A
                 time_diff = np.abs(trigger_times - stim_time)
-                valid_triggers = time_diff < 0.1  # 100ms tolerance
+                valid_mask = time_diff < tolerance
                 
-                if np.any(valid_triggers):
-                    # Use the closest 8-bit trigger
-                    closest_idx = np.argmin(time_diff)
-                    new_label = trigger_descriptions[closest_idx]
+                if np.any(valid_mask):
+                    # Find closest ONLY among valid triggers
+                    valid_positions = np.where(valid_mask)[0]
+                    closest_valid = valid_positions[np.argmin(time_diff[valid_mask])]
                     
-                    # Replace the Stimulus A label with the 8-bit trigger label
+                    new_label = trigger_descriptions[closest_valid]
                     stim_idx = stimulus_a_indices[i]
                     new_descriptions[stim_idx] = new_label
+                    
+                    # Mark the matched 8-bit trigger for removal
+                    matched_trigger_indices.add(trigger_indices[closest_valid])
                     
                     print(f"Replaced Stimulus A at {stim_time:.3f}s with {new_label}")
                 else:
                     print(f"No 8-bit trigger found near Stimulus A at {stim_time:.3f}s")
             
-            # Create new annotations with updated descriptions
+            # Build new annotations excluding matched 8-bit triggers
+            keep_mask = np.array([
+                i not in matched_trigger_indices 
+                for i in range(len(annotations))
+            ], dtype=bool)
+
+            onsets = np.array(annotations.onset)[keep_mask]
+            durations = np.array(annotations.duration)[keep_mask]
+            descriptions = np.array(new_descriptions)[keep_mask]
+
             new_annotations = mne.Annotations(
-                onset=annotations.onset,
-                duration=annotations.duration,
-                description=new_descriptions
+                onset=onsets,
+                duration=durations,
+                description=descriptions
             )
             
-            # Create new raw object with updated annotations
             raw_processed = raw.copy()
             raw_processed.set_annotations(new_annotations)
+            
+            print(f"\nTotal replacements: {len(matched_trigger_indices)}")
+            print(f"8-bit triggers removed: {len(matched_trigger_indices)}")
             
             return raw_processed
             
