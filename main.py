@@ -37,7 +37,7 @@ Steps
 '''
 
 # Settings
-config = ProjectConfig(subject_id="V02")
+config = ProjectConfig(subject_id="V00test")
 
 # Load data
 raw_data = load_raw(config)
@@ -60,6 +60,23 @@ raw_data = ArtifactRemover(config).remove_tms_artifact(raw_data)
 filtered_data = Filter(config).eeg_bp_filter(raw_data)
 filtered_data = Filter(config).emg_bp_filter(filtered_data)
 filtered_data = Filter(config).notch_filter(filtered_data)
+
+if config.subject_id == "V00test":
+    import mne
+    # Exemplo: distribui as annotations ao longo do sinal
+    duration_sec = filtered_data.times[-1]
+    print(f"Duração total: {duration_sec:.2f} s")
+
+    # Defina onsets válidos (menores que duration_sec)
+    my_annotations = mne.Annotations(
+        onset=[10, 11, 20, 21, 30, 31],   # ← ajuste para valores reais do seu experimento
+        duration=[0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+        description=["8Bit 1", "Stimulus A", "8Bit 2", "Stimulus A", "8Bit 3", "Stimulus A"],
+        orig_time=None
+    )
+
+    filtered_data.set_annotations(my_annotations)
+    print(filtered_data.annotations)
 
 # Create epochs using original "Stimulus A" annotations
 epochs = epocher.create_epochs(filtered_data)
