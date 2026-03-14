@@ -26,13 +26,13 @@ class EventConfig:
 
 @dataclass
 class ArtifactConfig:
-    window_removal_artifact: tuple = (-0.005, 0.008)
+    window_removal_artifact: tuple = (-0.005, 0.010)
     mode_removal_artifact: str = 'linear' # 'cubic'
 
 @dataclass
 class FilterConfig:
     eeg_bandpass: tuple = (1, 250)
-    emg_bandpass: tuple = (10, 400)
+    emg_bandpass: tuple = (20, 500)
     notch: tuple = (60, 120, 180, 240, 300)
     eeg_filter_epoched_data: bool = True
     eeg_bandpass_epochs: tuple = (None, 45)
@@ -41,7 +41,7 @@ class FilterConfig:
 class ChannelConfig:
     eeg_reference: str = 'average'
     remove_bad_channels: bool = True
-    bad_channels: tuple = ('TP9', 'TP10', 'O1', 'O2', 'Iz')
+    bad_channels: tuple = ()
     eog_label: str = 'EOG'
     emg_label: str = 'EMG'
     eeg_montage: str = 'standard_1020'

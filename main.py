@@ -13,7 +13,6 @@ from src.tms_eeg.preprocessing.ica import EEGICA
 from src.tms_eeg.preprocessing.downsampling import Downsampler
 from src.tms_eeg.preprocessing.annotation_processor import AnnotationProcessor
 from src.tms_eeg.visualization.tep_plots import TEPPlotter
-from src.tms_eeg.visualization.emg_plots import EMGPlotter
 
 '''
 Steps
@@ -47,9 +46,6 @@ raw_data.set_channel_types({
     config.channels.eog_label: 'eog', config.channels.emg_label: 'emg'})
 raw_data.set_montage(config.channels.eeg_montage)
 
-# Find events / create epochs
-epocher = EEGEpocher(config)
-
 # Drop unused channels
 raw_data.drop_channels(config.channels.bad_channels)
 
@@ -61,31 +57,38 @@ filtered_data = Filter(config).eeg_bp_filter(raw_data)
 filtered_data = Filter(config).emg_bp_filter(filtered_data)
 filtered_data = Filter(config).notch_filter(filtered_data)
 
-# if config.subject_id == "V00test":
-#     import mne
-    
-#     filtered_data.set_annotations(mne.Annotations([], [], []))
-#     # Exemplo: distribui as annotations ao longo do sinal
-#     duration_sec = filtered_data.times[-1]
-#     print(f"Duração total: {duration_sec:.2f} s")
-
-#     # Defina onsets válidos (menores que duration_sec)
-#     my_annotations = mne.Annotations(
-#         onset=[10, 10.1, 20, 20.1, 30, 30.1],   # ← ajuste para valores reais do seu experimento
-#         duration=[0.01, 0.01, 0.01, 0.01, 0.01, 0.01],
-#         description=["8Bit 1", "Stimulus A", "8Bit 2", "Stimulus A", "8Bit 3", "Stimulus A"],
-#         orig_time=None
-#     )
-
-#     filtered_data.set_annotations(my_annotations)
-#     print(filtered_data.annotations)
-
 # Process annotations to replace Stimulus A with condition labels
 annotation_processor = AnnotationProcessor(config)
 filtered_data = annotation_processor.process_annotations(filtered_data)
 
 # Create epochs using standard EEGEpocher
+epocher = EEGEpocher(config)
 epochs = epocher.create_epochs(filtered_data)
+
+# Apply SOUND
+# No main.py, na linha 69 onde está "# Apply SOUND"
+try:
+    import sys
+    import os
+    
+    # Adiciona o caminho do diretório PyTEP-SOUND-SSP-SIR ao Python path
+    sound_dir = os.path.join(os.path.dirname(__file__), 'PyTEP-SOUND-SSP-SIR')
+    sys.path.append(sound_dir)
+    
+    # Importa o módulo sound
+    from sound import apply_sound
+    
+    print("Aplicando SOUND para remoção de artefatos...")
+    epochs = apply_sound(epochs, iter_num=5, lambda_val=0.1)
+    print("SOUND aplicado com sucesso!")
+    
+except ImportError as e:
+    print(f"Erro ao importar SOUND: {e}")
+    print("Certifique-se de que o diretório PyTEP-SOUND-SSP-SIR está presente.")
+    print("Continuando sem SOUND...")
+except Exception as e:
+    print(f"Erro ao aplicar SOUND: {e}")
+    print("Continuando sem SOUND...")
 
 # Writer initialization
 writer = Writer(config)
@@ -94,14 +97,14 @@ writer = Writer(config)
 emg_epochs = Downsampler(config).downsample_emg_channels(epochs)
 writer.save_emg_epochs(emg_epochs, 'emg_processed')
 
-# Set average reference
-epochs.set_eeg_reference(config.channels.eeg_reference)
-
 # Check and remove bad channels -> Manual Action Required
 epochs.plot()
 
 # Interpolate bad channels
 epochs = epochs.interpolate_bads(reset_bads=True)
+
+# Set average reference
+epochs.set_eeg_reference(config.channels.eeg_reference)
 
 # Check and remove bad epochs
 epochs.plot()

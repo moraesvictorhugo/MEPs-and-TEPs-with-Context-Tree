@@ -81,3 +81,6 @@ data/
 *.pot
 *.mo
 *.po
+
+# SOUND-SSP project
+PyTEP-SOUND-SSP-SIR/
