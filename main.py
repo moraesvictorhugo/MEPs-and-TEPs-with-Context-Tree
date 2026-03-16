@@ -36,7 +36,7 @@ Steps
 '''
 
 # Settings
-config = ProjectConfig(subject_id="V00test")
+config = ProjectConfig(subject_id="V07")
 
 # Load data
 raw_data = load_raw(config)
@@ -66,7 +66,6 @@ epocher = EEGEpocher(config)
 epochs = epocher.create_epochs(filtered_data)
 
 # Apply SOUND
-# No main.py, na linha 69 onde está "# Apply SOUND"
 try:
     import sys
     import os
@@ -113,7 +112,7 @@ epochs.plot()
 ica_processor = EEGICA(config)
 ica_processor.fit_ica(epochs)
 ica_processor.plot_components(epochs)
-epochs = ica_processor.apply_ica(epochs, components_to_remove=[0, 3, 15, 18])
+epochs = ica_processor.apply_ica(epochs, components_to_remove=[0])
 epochs.plot(block = False)
 
 # Baseline correction

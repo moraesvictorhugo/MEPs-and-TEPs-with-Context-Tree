@@ -1217,6 +1217,12 @@ wheels = [
 ]
 
 [[package]]
+name = "matlabengine"
+version = "25.2.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ff/80/20ea22fc5483b14c7136231b3d71d01510a8bdb57c2a4fb1dad334013701/matlabengine-25.2.2.tar.gz", hash = "sha256:c7c92cb402628bf289ac3c53630d1c5a42544da8ce423dc2f423cc375ac95be8", size = 18813, upload-time = "2025-09-18T19:05:40.708Z" }
+
+[[package]]
 name = "matplotlib"
 version = "3.10.8"
 source = { registry = "https://pypi.org/simple" }
@@ -2497,6 +2503,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "ipykernel" },
     { name = "jupyter" },
+    { name = "matlabengine" },
     { name = "matplotlib" },
     { name = "mne" },
     { name = "mne-qt-browser" },
@@ -2511,6 +2518,7 @@ dependencies = [
 requires-dist = [
     { name = "ipykernel", specifier = ">=7.2.0" },
     { name = "jupyter", specifier = ">=1.1.1" },
+    { name = "matlabengine", specifier = ">=9.10.0" },
     { name = "matplotlib", specifier = ">=3.10.8" },
     { name = "mne", specifier = ">=1.11.0" },
     { name = "mne-qt-browser", specifier = ">=0.7.4" },

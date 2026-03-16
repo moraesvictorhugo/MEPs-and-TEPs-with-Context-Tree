@@ -26,7 +26,7 @@ class EventConfig:
 
 @dataclass
 class ArtifactConfig:
-    window_removal_artifact: tuple = (-0.005, 0.010)
+    window_removal_artifact: tuple = (-0.005, 0.012)
     mode_removal_artifact: str = 'linear' # 'cubic'
 
 @dataclass

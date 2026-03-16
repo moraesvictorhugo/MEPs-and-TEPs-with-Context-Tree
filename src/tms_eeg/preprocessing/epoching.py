@@ -94,7 +94,7 @@ class EEGEpocher:
             baseline=epoch_cfg.baseline,
             preload=True,
             reject=None,
-            flat=None,
+            flat=None
         )
 
         return epochs
