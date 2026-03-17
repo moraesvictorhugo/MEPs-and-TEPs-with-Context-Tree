@@ -1,8 +1,10 @@
 """TEP (TMS-Evoked Potential) visualization class."""
 
 import mne
-from typing import List, Optional, Union
+from typing import List, Optional, Dict
 from pathlib import Path
+import numpy as np
+import matplotlib.pyplot as plt
 
 class TEPPlotter:
     """Plots TEP-related visualizations from epochs or evoked objects."""
@@ -17,7 +19,7 @@ class TEPPlotter:
         writer=None,
     ):
         self.config = config
-        self.xlim = xlim or (config.plots.tep_xlim if config else (-0.02, 0.2))
+        self.xlim = xlim or (config.plots.tep_xlim if config else (-0.01, 0.2))
         self.topo_times = topo_times or (config.plots.tep_topo_times if config else [
             0.005, 0.01, 0.02, 0.03, 0.04, 0.05,
             0.06, 0.07, 0.08, 0.09, 0.1
@@ -130,3 +132,33 @@ class TEPPlotter:
         )
         self._save_figure(fig, "topo", condition)
 
+    def plot_mean_tep(
+        self,
+        evokeds: Dict[str, mne.Evoked],
+        xlim: tuple = None,
+    ):
+        xlim = xlim or self.xlim
+        xlim_ms = (xlim[0] * 1e3, xlim[1] * 1e3)
+
+        conditions = list(evokeds.keys())
+        channels = list(evokeds[conditions[0]].ch_names)
+        times = evokeds[conditions[0]].times
+
+        for ch in channels:
+            fig, ax = plt.subplots(figsize=(8, 4))
+            for cond in conditions:
+                signal = evokeds[cond].copy().pick([ch]).data.squeeze()
+                ax.plot(times * 1e3, signal * 1e6, label=cond)
+
+            ax.set_xlim(xlim_ms)
+            ax.set_xlabel("Time (ms)")
+            ax.set_ylabel("Amplitude (µV)")
+            ax.set_title(f"Average TEP — {ch}")
+            ax.legend()
+            ax.axhline(0, color="gray", linestyle="--", linewidth=0.5)
+            ax.axvline(0, color="gray", linestyle="--", linewidth=0.5)
+            fig.tight_layout()
+
+            self._save_figure(fig, f"mean_tep_{ch}", "all_conditions")
+            plt.show()
+            plt.close(fig)

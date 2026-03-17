@@ -4,10 +4,10 @@ from dataclasses import dataclass, field
 
 @dataclass
 class IOConfig:
-    export_data: bool = True
+    export_data: bool = False
     change_channel_types: bool = False
     new_channel_names: dict = field(default_factory=dict)  # {"EEG 001": "Fp1"}
-    save_figs: bool = True
+    save_figs: bool = False
 
 @dataclass
 class EventConfig:
@@ -71,12 +71,12 @@ class AnalysisConfig:
     channels_of_interest: list = field(default_factory=lambda: [
         "FC1", "FC5", "C3", "CP1", "CP5"])
     time_windows: dict = field(default_factory=lambda: {
-        "N15":  (0.012, 0.025),
-        "P30":  (0.025, 0.040),
+        "N15":  (0.012, 0.020),
+        "P30":  (0.020, 0.040),
         "N45":  (0.040, 0.055),
-        "P60":  (0.055, 0.075),
-        "N100": (0.090, 0.120),
-        "P180": (0.160, 0.200),
+        "P60":  (0.050, 0.070),
+        "N100": (0.070, 0.150),
+        "P180": (0.150, 0.200), # Defined following Beck et al (2024)
     })
     # GMFP / LMFP
     compute_gmfp: bool = True
@@ -96,7 +96,7 @@ class PlotConfig:
     figure_dpi: int = 300
     figure_subfolder: str = "figures"
     # TEP plotting options
-    tep_xlim: tuple = (-0.02, 0.2)
+    tep_xlim: tuple = (-0.01, 0.2)
     tep_topo_times: list = field(default_factory=lambda: [
         0.005, 0.01, 0.02, 0.03, 0.04, 0.05,
         0.06, 0.07, 0.08, 0.09, 0.1

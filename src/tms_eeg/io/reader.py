@@ -22,7 +22,7 @@ def load_data(config: ProjectConfig, data_type: str = "raw"):
 
     elif data_type == "epochs":
         subject_dir = base_dir / "data" / "processed" / f"{config.subject_id}" / "processed"
-        file_path = next(subject_dir.glob("*-epo.fif"))
+        file_path = next(subject_dir.glob("*_epochs_processed.fif"))
         data = mne.read_epochs(file_path, preload=True)
 
     else:
