@@ -1,9 +1,93 @@
+# # features.py
+
+# import mne
+# import numpy as np
+# import pandas as pd
+# from typing import Dict, List, Tuple, Optional
+
+# class FeatureExtractor:
+#     """Extrai features de amplitude de epochs EEG."""
+
+#     def __init__(
+#         self,
+#         epochs: mne.Epochs,
+#         channels: List[str],
+#         time_windows: Dict[str, Tuple[float, float]],
+#     ):
+#         self.epochs = epochs
+#         self.channels = channels
+#         self.time_windows = time_windows
+
+#     def get_evokeds(
+#         self,
+#         conditions: Optional[List[str]] = None,
+#     ) -> Dict[str, mne.Evoked]:
+#         """
+#         Retorna o Evoked (TEP médio) por condição, já filtrado nos canais de interesse.
+#         """
+#         if conditions is None:
+#             conditions = list(self.epochs.event_id.keys())
+
+#         return {
+#             cond: self.epochs[cond].average().pick(self.channels)
+#             for cond in conditions
+#         }
+
+#     def peak_to_peak(
+#         self,
+#         component1: str = "N15",
+#         component2: str = "P30",
+#         evokeds: Optional[Dict[str, mne.Evoked]] = None,
+#     ) -> pd.DataFrame:
+#         """
+#         Amplitude pico-a-pico entre dois componentes, calculada sobre
+#         o Evoked de cada condição/canal.
+#         """
+#         if evokeds is None:
+#             evokeds = self.get_evokeds()
+
+#         t1_min, t1_max = self.time_windows[component1]
+#         t2_min, t2_max = self.time_windows[component2]
+#         label = f"{component1}-{component2}"
+#         times = self.epochs.times
+#         mask1 = (times >= t1_min) & (times <= t1_max)
+#         mask2 = (times >= t2_min) & (times <= t2_max)
+
+#         rows = []
+#         for cond, evoked in evokeds.items():
+#             for ch in self.channels:
+#                 signal = evoked.copy().pick([ch]).data.squeeze()  # (n_times,)
+#                 val1 = signal[mask1].min()
+#                 val2 = signal[mask2].max()
+
+#                 rows.append({
+#                     "condition": cond,
+#                     "channel": ch,
+#                     "component": label,
+#                     "peak_to_peak": val2 - val1,
+#                 })
+
+#         return pd.DataFrame(rows)
+    
+#     def compute_gmfp(
+#         self,
+#         evokeds: Optional[Dict[str, mne.Evoked]] = None,
+#     ) -> Dict[str, np.ndarray]:
+#         if evokeds is None:
+#             evokeds = self.get_evokeds()
+
+#         return {
+#             cond: evoked.data.std(axis=0)
+#             for cond, evoked in evokeds.items()
+#         }
+
 # features.py
 
 import mne
 import numpy as np
 import pandas as pd
 from typing import Dict, List, Tuple, Optional
+
 
 class FeatureExtractor:
     """Extrai features de amplitude de epochs EEG."""
@@ -18,20 +102,38 @@ class FeatureExtractor:
         self.channels = channels
         self.time_windows = time_windows
 
+    # ------------------------------------------------------------------ #
+    #  Evokeds
+    # ------------------------------------------------------------------ #
+
     def get_evokeds(
         self,
         conditions: Optional[List[str]] = None,
+        picks: Optional[List[str]] = None,
     ) -> Dict[str, mne.Evoked]:
         """
-        Retorna o Evoked (TEP médio) por condição, já filtrado nos canais de interesse.
+        Retorna o Evoked (TEP médio) por condição.
+
+        Parameters
+        ----------
+        conditions : list of str, optional
+            Condições a extrair. Se None, usa todas do epochs.event_id.
+        picks : list of str, optional
+            Canais a selecionar. Se None, usa self.channels (ROI).
         """
         if conditions is None:
             conditions = list(self.epochs.event_id.keys())
+        if picks is None:
+            picks = self.channels
 
         return {
-            cond: self.epochs[cond].average().pick(self.channels)
+            cond: self.epochs[cond].average().pick(picks)
             for cond in conditions
         }
+
+    # ------------------------------------------------------------------ #
+    #  Peak-to-Peak
+    # ------------------------------------------------------------------ #
 
     def peak_to_peak(
         self,
@@ -56,7 +158,7 @@ class FeatureExtractor:
         rows = []
         for cond, evoked in evokeds.items():
             for ch in self.channels:
-                signal = evoked.copy().pick([ch]).data.squeeze()  # (n_times,)
+                signal = evoked.copy().pick([ch]).data.squeeze()
                 val1 = signal[mask1].min()
                 val2 = signal[mask2].max()
 
@@ -64,19 +166,142 @@ class FeatureExtractor:
                     "condition": cond,
                     "channel": ch,
                     "component": label,
-                    "peak_to_peak": val2 - val1,
+                    "peak_to_peak_uV": (val2 - val1) * 1e6,
                 })
 
         return pd.DataFrame(rows)
-    
+
+    # ------------------------------------------------------------------ #
+    #  GMFP — Global Mean Field Power (all EEG channels)
+    # ------------------------------------------------------------------ #
+
     def compute_gmfp(
         self,
-        evokeds: Optional[Dict[str, mne.Evoked]] = None,
+        conditions: Optional[List[str]] = None,
     ) -> Dict[str, np.ndarray]:
-        if evokeds is None:
-            evokeds = self.get_evokeds()
+        """
+        Global Mean Field Power: std across ALL EEG channels per time point.
 
+        Returns dict {condition: 1-D array of shape (n_times,)}.
+        """
+        evokeds_all = self._get_evokeds_all_eeg(conditions)
         return {
             cond: evoked.data.std(axis=0)
-            for cond, evoked in evokeds.items()
+            for cond, evoked in evokeds_all.items()
+        }
+
+    # ------------------------------------------------------------------ #
+    #  LMFP — Local Mean Field Power (ROI channels)
+    # ------------------------------------------------------------------ #
+
+    def compute_lmfp(
+        self,
+        conditions: Optional[List[str]] = None,
+    ) -> Dict[str, np.ndarray]:
+        """
+        Local Mean Field Power: std across ROI channels per time point.
+
+        Returns dict {condition: 1-D array of shape (n_times,)}.
+        """
+        evokeds_roi = self.get_evokeds(conditions=conditions, picks=self.channels)
+        return {
+            cond: evoked.data.std(axis=0)
+            for cond, evoked in evokeds_roi.items()
+        }
+
+    # ------------------------------------------------------------------ #
+    #  Peak amplitude & latency from GMFP / LMFP curves
+    # ------------------------------------------------------------------ #
+
+    def extract_mfp_peaks(
+        self,
+        mfp_data: Dict[str, np.ndarray],
+        label: str = "GMFP",
+    ) -> pd.DataFrame:
+        """
+        Extrai amplitude de pico e latência de cada time_window
+        a partir de uma curva MFP (GMFP ou LMFP).
+
+        Parameters
+        ----------
+        mfp_data : dict
+            {condition: 1-D array} retornado por compute_gmfp ou compute_lmfp.
+        label : str
+            "GMFP" ou "LMFP" — usado na coluna 'measure'.
+
+        Returns
+        -------
+        pd.DataFrame
+            Colunas: condition, measure, component, peak_amplitude_uV, peak_latency_ms
+        """
+        times = self.epochs.times
+        rows = []
+
+        for cond, curve in mfp_data.items():
+            for comp, (t_min, t_max) in self.time_windows.items():
+                mask = (times >= t_min) & (times <= t_max)
+                if not mask.any():
+                    continue
+
+                segment = curve[mask]
+                times_segment = times[mask]
+
+                peak_idx = np.argmax(segment)
+                peak_amp = segment[peak_idx]
+                peak_lat = times_segment[peak_idx]
+
+                rows.append({
+                    "condition": cond,
+                    "measure": label,
+                    "component": comp,
+                    "peak_amplitude_uV": peak_amp * 1e6,
+                    "peak_latency_ms": peak_lat * 1e3,
+                })
+
+        return pd.DataFrame(rows)
+
+    # ------------------------------------------------------------------ #
+    #  Summary DataFrame (all features in one table)
+    # ------------------------------------------------------------------ #
+
+    def compute_summary(self) -> pd.DataFrame:
+        """
+        Executa todas as extrações e retorna um DataFrame consolidado.
+        Inclui: GMFP peaks, LMFP peaks, peak-to-peak amplitudes.
+        """
+        gmfp = self.compute_gmfp()
+        lmfp = self.compute_lmfp()
+
+        df_gmfp = self.extract_mfp_peaks(gmfp, label="GMFP")
+        df_lmfp = self.extract_mfp_peaks(lmfp, label="LMFP")
+
+        # Peak-to-peak for consecutive component pairs
+        components = list(self.time_windows.keys())
+        p2p_frames = []
+        for i in range(len(components) - 1):
+            try:
+                df = self.peak_to_peak(components[i], components[i + 1])
+                p2p_frames.append(df)
+            except Exception:
+                continue
+
+        df_p2p = pd.concat(p2p_frames, ignore_index=True) if p2p_frames else pd.DataFrame()
+
+        return df_gmfp, df_lmfp, df_p2p
+
+    # ------------------------------------------------------------------ #
+    #  Internal helpers
+    # ------------------------------------------------------------------ #
+
+    def _get_evokeds_all_eeg(
+        self,
+        conditions: Optional[List[str]] = None,
+    ) -> Dict[str, mne.Evoked]:
+        """Retorna evokeds com TODOS os canais EEG (para GMFP)."""
+        if conditions is None:
+            conditions = list(self.epochs.event_id.keys())
+
+        return {
+            cond: self.epochs[cond].average().pick("eeg")
+            for cond in conditions
         }
