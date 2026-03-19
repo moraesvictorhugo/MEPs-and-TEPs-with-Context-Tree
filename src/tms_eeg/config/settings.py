@@ -123,6 +123,7 @@ class PlotConfig:
     ])
     # EMG plotting options
     emg_xlim: tuple = (-0.01, 0.08)
+    analysis_plots: bool = False
 
 @dataclass
 class ProjectConfig:

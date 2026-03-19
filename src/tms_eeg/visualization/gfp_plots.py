@@ -48,6 +48,9 @@ class MFPPlotter:
         Plot GMFP and LMFP side by side for all conditions.
         One figure per condition with 2 subplots.
         """
+        if self.config and not self.config.plots.analysis_plots:
+            return
+            
         conditions = list(gmfp.keys())
 
         for cond in conditions:
@@ -82,6 +85,9 @@ class MFPPlotter:
         """
         Overlay all conditions on a single plot for GMFP or LMFP.
         """
+        if self.config and not self.config.plots.analysis_plots:
+            return
+            
         fig, ax = plt.subplots(figsize=(10, 5))
 
         for cond, curve in mfp_data.items():

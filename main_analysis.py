@@ -41,7 +41,8 @@ for subject_id in subjects:
 
     # ── Peak-to-Peak calculation ─────────────────────────────────────
     amplitude_N15_P30 = extractor.peak_to_peak("N15", "P30", evokeds=evokeds)
-    amplitude_N100_P180 = extractor.peak_to_peak("N100", "P180", evokeds=evokeds)
+    amplitude_N100_P180 = extractor.peak_to_peak(
+        "N100", "P180", evokeds=evokeds)
 
     # ── GMFP & LMFP calculation ─────────────────────────────────────
     gmfp = extractor.compute_gmfp()
@@ -50,10 +51,7 @@ for subject_id in subjects:
     # ── MFP peak extraction ──────────────────────────────────────────
     df_gmfp_peaks = extractor.extract_mfp_peaks(gmfp, label="GMFP")
     df_lmfp_peaks = extractor.extract_mfp_peaks(lmfp, label="LMFP")
-
-    # ── Full summary (optional — runs everything at once) ────────────
-    # df_gmfp, df_lmfp, df_p2p = extractor.compute_summary()
-
+   
     # ── MFP Plots ────────────────────────────────────────────────────
     # Side-by-side GMFP vs LMFP per condition
     mfp_plotter.plot_gmfp_lmfp(
@@ -62,8 +60,10 @@ for subject_id in subjects:
     )
 
     # Overlay all conditions (one plot for GMFP, one for LMFP)
-    mfp_plotter.plot_overlay(gmfp, label="GMFP", time_windows=config.analysis.time_windows)
-    mfp_plotter.plot_overlay(lmfp, label="LMFP", time_windows=config.analysis.time_windows)
+    mfp_plotter.plot_overlay(
+        gmfp, label="GMFP", time_windows=config.analysis.time_windows)
+    mfp_plotter.plot_overlay(
+        lmfp, label="LMFP", time_windows=config.analysis.time_windows)
 
     # ================================================================ #
     #  PART 2 — ANÁLISE POR CONTEXTO (árvore de contexto)
@@ -93,7 +93,44 @@ for subject_id in subjects:
         ).data.std(axis=0)
         for ctx_name, ctx_ep in context_epochs.items()
     }
-
+     
+    ####
+    # ── Feature extraction per context (reusing FeatureExtractor) ──
+    ctx_gmfp_peaks = {}
+    ctx_lmfp_peaks = {}
+    ctx_p2p_N15_P30 = {}
+    ctx_p2p_N100_P180 = {}
+    
+    for ctx_name, ctx_ep in context_epochs.items():
+        # Create a FeatureExtractor for this context subset
+        ctx_extractor = FeatureExtractor(
+            ctx_ep,
+            config.analysis.channels_of_interest,
+            config.analysis.time_windows,
+        )
+        
+        # Compute GMFP and LMFP using the extractor
+        ctx_gmfp_dict = ctx_extractor.compute_gmfp()
+        ctx_lmfp_dict = ctx_extractor.compute_lmfp()
+        
+        # Extract peaks
+        ctx_gmfp_peaks[ctx_name] = ctx_extractor.extract_mfp_peaks(
+            ctx_gmfp_dict, label="GMFP"
+        )
+        ctx_lmfp_peaks[ctx_name] = ctx_extractor.extract_mfp_peaks(
+            ctx_lmfp_dict, label="LMFP"
+        )
+        
+        # Compute peak-to-peak amplitudes
+        ctx_evokeds_single = ctx_extractor.get_evokeds()
+        ctx_p2p_N15_P30[ctx_name] = ctx_extractor.peak_to_peak(
+            "N15", "P30", evokeds=ctx_evokeds_single
+        )
+        ctx_p2p_N100_P180[ctx_name] = ctx_extractor.peak_to_peak(
+            "N100", "P180", evokeds=ctx_evokeds_single
+        )
+    ####    
+    
     # ── MFP Plots por contexto ───────────────────────────────────────
     mfp_plotter.plot_overlay(
         ctx_gmfp, label="GMFP_context",
@@ -104,7 +141,7 @@ for subject_id in subjects:
         time_windows=config.analysis.time_windows,
     )
 
-    # ── Branch 1 comparison ──────────────────────────────────────────
+    # ── Contexts branch 1 comparison ──────────────────────────────────────────
     tep_plotter.plot_context_comparison(context_epochs)
     
     # ── Time evolution comparison ────────────────────────────────────
@@ -123,7 +160,7 @@ for subject_id in subjects:
     #  COLLECT RESULTS
     # ================================================================ #
 
-    all_results.append({        #WORK HERE to include contexts amplitues
+    all_results.append({        
         "subject": subject_id,
         # Per-condition results
         "amplitude_N15_P30": amplitude_N15_P30,
@@ -134,6 +171,10 @@ for subject_id in subjects:
         "context_evokeds": ctx_evokeds,
         "context_gmfp": ctx_gmfp,
         "context_lmfp": ctx_lmfp,
+        "context_gmfp_peaks": ctx_gmfp_peaks,
+        "context_lmfp_peaks": ctx_lmfp_peaks,
+        "context_p2p_N15_P30": ctx_p2p_N15_P30,
+        "context_p2p_N100_P180": ctx_p2p_N100_P180,
     })
 
 # if __name__ == "__main__":

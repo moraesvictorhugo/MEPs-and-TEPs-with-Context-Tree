@@ -137,6 +137,9 @@ class TEPPlotter:
         evokeds: Dict[str, mne.Evoked],
         xlim: tuple = None,
     ):
+        if self.config and not self.config.plots.analysis_plots:
+            return
+            
         xlim = xlim or self.xlim
         xlim_ms = (xlim[0] * 1e3, xlim[1] * 1e3)
 
@@ -184,6 +187,9 @@ class TEPPlotter:
         picks : list, optional
             Canais a plotar. Default: roi_picks do config.
         """
+        if self.config and not self.config.plots.analysis_plots:
+            return
+            
         contexts = contexts or ["ctx_01", "ctx_11", "ctx_21"]
         xlim = xlim or self.xlim
         xlim_ms = (xlim[0] * 1e3, xlim[1] * 1e3)
@@ -287,6 +293,9 @@ class TEPPlotter:
         picks : list, optional
             Canais ROI. Default: roi_picks do config.
         """
+        if self.config and not self.config.plots.analysis_plots:
+            return
+            
         contexts = contexts or list(context_epochs.keys())
         xlim = xlim or self.xlim
         xlim_ms = (xlim[0] * 1e3, xlim[1] * 1e3)
