@@ -190,10 +190,17 @@ for subject_id in subjects:
 
 # ── Export to CSV if enabled ──
 config_check = ProjectConfig()
-collector.export_csv(
+database = collector.export_csv(
     output_path="data/group/all_subjects_metrics.csv",
     export_enabled=config_check.io.export_data,
 )
+
+# Work in progress
+# 1. Verificar métricas
+# 2. Substiruir labels de condição por alfabeto
+# 3. corrigir contextos que estão no df
+# 4. Criar plots de análise em grupo (boxplots para cada amplitude em diferentes condições e contextos e momentos.)
+
 
 # if __name__ == "__main__":
 #     main()

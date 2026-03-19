@@ -67,7 +67,7 @@ class ICAConfig:
 @dataclass
 class AnalysisConfig:
     subjects: list = field(default_factory=lambda: [
-        "V02"])
+        "V02", "V03"])
     channels_of_interest: list = field(default_factory=lambda: [
         "FC1", "FC5", "C3", "CP1", "CP5"])
     time_windows: dict = field(default_factory=lambda: {
