@@ -19,9 +19,13 @@ subjects = ProjectConfig().analysis.subjects
 for subject_id in subjects:
     config = ProjectConfig(subject_id=subject_id)
     epochs = load_data(config, data_type="epochs")
-    writer = Writer(config)
+    
+    # ── Renomear condições ───────────────────────────────────────────
+    label_map = {"8bit 1": "0", "8bit 2": "1", "8bit 3": "2"}
+    epochs.event_id = {label_map[k.lower()]: v for k, v in epochs.event_id.items()}
 
     # ── Shared objects ───────────────────────────────────────────────
+    writer = Writer(config)
     extractor = FeatureExtractor(
         epochs,
         config.analysis.channels_of_interest,
@@ -42,12 +46,16 @@ for subject_id in subjects:
 
     # ── Peak-to-Peak calculation ─────────────────────────────────────
     amplitude_N15_P30 = extractor.peak_to_peak("N15", "P30", evokeds=evokeds)
+    amplitude_N15_P60 = extractor.peak_to_peak("N15", "P60", evokeds=evokeds)
     amplitude_N100_P180 = extractor.peak_to_peak(
         "N100", "P180", evokeds=evokeds)
     
     # ── Collect peak-to-peak rows ──
     collector.collect_peak_to_peak_from_df(
         subject_id, "condition", amplitude_N15_P30, "N15-P30"
+    )
+    collector.collect_peak_to_peak_from_df(
+        subject_id, "condition", amplitude_N15_P60, "N15-P60"
     )
     collector.collect_peak_to_peak_from_df(
         subject_id, "condition", amplitude_N100_P180, "N100-P180"
@@ -105,6 +113,7 @@ for subject_id in subjects:
     ctx_gmfp_peaks = {}
     ctx_lmfp_peaks = {}
     ctx_p2p_N15_P30 = {}
+    ctx_p2p_N15_P60 = {}
     ctx_p2p_N100_P180 = {}
     
     for ctx_name, ctx_ep in context_epochs.items():
@@ -136,27 +145,49 @@ for subject_id in subjects:
         ctx_p2p_N15_P30[ctx_name] = ctx_extractor.peak_to_peak(
             "N15", "P30", evokeds=ctx_evokeds_single
         )
+        ctx_p2p_N15_P60[ctx_name] = ctx_extractor.peak_to_peak(
+            "N15", "P60", evokeds=ctx_evokeds_single
+        )
         ctx_p2p_N100_P180[ctx_name] = ctx_extractor.peak_to_peak(
             "N100", "P180", evokeds=ctx_evokeds_single
         )
     
     # ── Collect context metrics ──
     for ctx_name, df in ctx_p2p_N15_P30.items():
+        df = df.copy()
+        df["condition"] = ctx_name
         collector.collect_peak_to_peak_from_df(
             subject_id, "context", df, "N15-P30"
         )
+    
+    for ctx_name, df in ctx_p2p_N15_P60.items():
+        df = df.copy()
+        df["condition"] = ctx_name
+        collector.collect_peak_to_peak_from_df(
+            subject_id, "context", df, "N15-P60"
+        )
+
     for ctx_name, df in ctx_p2p_N100_P180.items():
+        df = df.copy()
+        df["condition"] = ctx_name
         collector.collect_peak_to_peak_from_df(
             subject_id, "context", df, "N100-P180"
         )
+
     for ctx_name, df in ctx_gmfp_peaks.items():
+        df = df.copy()
+        df["condition"] = ctx_name
         collector.collect_mfp_peaks_from_df(
             subject_id, "context", df, "GMFP"
         )
+
     for ctx_name, df in ctx_lmfp_peaks.items():
+        df = df.copy()
+        df["condition"] = ctx_name
         collector.collect_mfp_peaks_from_df(
             subject_id, "context", df, "LMFP"
         )
+
     ####    
     
     # ── MFP Plots por contexto ───────────────────────────────────────
@@ -191,16 +222,6 @@ for subject_id in subjects:
 # ── Export to CSV if enabled ──
 config_check = ProjectConfig()
 database = collector.export_csv(
-    output_path="data/group/all_subjects_metrics.csv",
+    output_path="data/group/database.csv",
     export_enabled=config_check.io.export_data,
 )
-
-# Work in progress
-# 1. Verificar métricas
-# 2. Substiruir labels de condição por alfabeto
-# 3. corrigir contextos que estão no df
-# 4. Criar plots de análise em grupo (boxplots para cada amplitude em diferentes condições e contextos e momentos.)
-
-
-# if __name__ == "__main__":
-#     main()

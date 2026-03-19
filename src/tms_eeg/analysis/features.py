@@ -59,6 +59,9 @@ class FeatureExtractor:
         """
         Amplitude pico-a-pico entre dois componentes, calculada sobre
         o Evoked de cada condição/canal.
+        
+        Obs: A função assume que component1 é sempre negativo e component2 é
+        sempre positivo.
         """
         if evokeds is None:
             evokeds = self.get_evokeds()
