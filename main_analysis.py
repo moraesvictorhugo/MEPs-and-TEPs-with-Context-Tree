@@ -99,20 +99,9 @@ for subject_id in subjects:
     # ── TEP plots por contexto ───────────────────────────────────────
     tep_plotter.plot_mean_tep(evokeds=ctx_evokeds)
 
-    # ── GMFP & LMFP por contexto ────────────────────────────────────
-    ctx_gmfp = {
-        ctx_name: ctx_ep.average().pick("eeg").data.std(axis=0)
-        for ctx_name, ctx_ep in context_epochs.items()
-    }
-    ctx_lmfp = {
-        ctx_name: ctx_ep.average().pick(
-            config.analysis.channels_of_interest
-        ).data.std(axis=0)
-        for ctx_name, ctx_ep in context_epochs.items()
-    }
-     
-    ####
     # ── Feature extraction per context (reusing FeatureExtractor) ──
+    ctx_gmfp = {}
+    ctx_lmfp = {}
     ctx_gmfp_peaks = {}
     ctx_lmfp_peaks = {}
     ctx_p2p_N15_P30 = {}
@@ -129,6 +118,10 @@ for subject_id in subjects:
         # Compute GMFP and LMFP using the extractor
         ctx_gmfp_dict = ctx_extractor.compute_gmfp()
         ctx_lmfp_dict = ctx_extractor.compute_lmfp()
+        
+        # Store for plotting (single context → single curve)
+        ctx_gmfp[ctx_name] = list(ctx_gmfp_dict.values())[0]
+        ctx_lmfp[ctx_name] = list(ctx_lmfp_dict.values())[0]
         
         # Extract peaks
         ctx_gmfp_peaks[ctx_name] = ctx_extractor.extract_mfp_peaks(
