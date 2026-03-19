@@ -9,10 +9,11 @@ from src.tms_eeg.io.reader import load_data, get_raw_path
 from src.tms_eeg.io.writer import Writer
 from src.tms_eeg.analysis.features import FeatureExtractor
 from src.tms_eeg.analysis.context import ContextMapper
+from src.tms_eeg.analysis.group import MetricsCollector
 from src.tms_eeg.visualization.tep_plots import TEPPlotter
 from src.tms_eeg.visualization.gfp_plots import MFPPlotter
 
-all_results = []
+collector = MetricsCollector()
 subjects = ProjectConfig().analysis.subjects
 
 for subject_id in subjects:
@@ -43,6 +44,14 @@ for subject_id in subjects:
     amplitude_N15_P30 = extractor.peak_to_peak("N15", "P30", evokeds=evokeds)
     amplitude_N100_P180 = extractor.peak_to_peak(
         "N100", "P180", evokeds=evokeds)
+    
+    # ── Collect peak-to-peak rows ──
+    collector.collect_peak_to_peak_from_df(
+        subject_id, "condition", amplitude_N15_P30, "N15-P30"
+    )
+    collector.collect_peak_to_peak_from_df(
+        subject_id, "condition", amplitude_N100_P180, "N100-P180"
+    )
 
     # ── GMFP & LMFP calculation ─────────────────────────────────────
     gmfp = extractor.compute_gmfp()
@@ -51,6 +60,14 @@ for subject_id in subjects:
     # ── MFP peak extraction ──────────────────────────────────────────
     df_gmfp_peaks = extractor.extract_mfp_peaks(gmfp, label="GMFP")
     df_lmfp_peaks = extractor.extract_mfp_peaks(lmfp, label="LMFP")
+    
+    # ── Collect MFP peaks rows ──
+    collector.collect_mfp_peaks_from_df(
+        subject_id, "condition", df_gmfp_peaks, "GMFP"
+    )
+    collector.collect_mfp_peaks_from_df(
+        subject_id, "condition", df_lmfp_peaks, "LMFP"
+    )
    
     # ── MFP Plots ────────────────────────────────────────────────────
     # Side-by-side GMFP vs LMFP per condition
@@ -129,6 +146,24 @@ for subject_id in subjects:
         ctx_p2p_N100_P180[ctx_name] = ctx_extractor.peak_to_peak(
             "N100", "P180", evokeds=ctx_evokeds_single
         )
+    
+    # ── Collect context metrics ──
+    for ctx_name, df in ctx_p2p_N15_P30.items():
+        collector.collect_peak_to_peak_from_df(
+            subject_id, "context", df, "N15-P30"
+        )
+    for ctx_name, df in ctx_p2p_N100_P180.items():
+        collector.collect_peak_to_peak_from_df(
+            subject_id, "context", df, "N100-P180"
+        )
+    for ctx_name, df in ctx_gmfp_peaks.items():
+        collector.collect_mfp_peaks_from_df(
+            subject_id, "context", df, "GMFP"
+        )
+    for ctx_name, df in ctx_lmfp_peaks.items():
+        collector.collect_mfp_peaks_from_df(
+            subject_id, "context", df, "LMFP"
+        )
     ####    
     
     # ── MFP Plots por contexto ───────────────────────────────────────
@@ -157,25 +192,15 @@ for subject_id in subjects:
     )
     
     # ================================================================ #
-    #  COLLECT RESULTS
+    #  COLLECT RESULTS (tidy format - rows already collected above)
     # ================================================================ #
 
-    all_results.append({        
-        "subject": subject_id,
-        # Per-condition results
-        "amplitude_N15_P30": amplitude_N15_P30,
-        "amplitude_N100_P180": amplitude_N100_P180,
-        "gmfp_peaks": df_gmfp_peaks,
-        "lmfp_peaks": df_lmfp_peaks,
-        # Per-context results
-        "context_evokeds": ctx_evokeds,
-        "context_gmfp": ctx_gmfp,
-        "context_lmfp": ctx_lmfp,
-        "context_gmfp_peaks": ctx_gmfp_peaks,
-        "context_lmfp_peaks": ctx_lmfp_peaks,
-        "context_p2p_N15_P30": ctx_p2p_N15_P30,
-        "context_p2p_N100_P180": ctx_p2p_N100_P180,
-    })
+# ── Export to CSV if enabled ──
+config_check = ProjectConfig()
+collector.export_csv(
+    output_path="data/group/all_subjects_metrics.csv",
+    export_enabled=config_check.io.export_data,
+)
 
 # if __name__ == "__main__":
 #     main()
