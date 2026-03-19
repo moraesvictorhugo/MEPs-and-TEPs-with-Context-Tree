@@ -111,9 +111,6 @@ for subject_id in subjects:
     # Metades (default)
     tep_plotter.plot_context_temporal_comparison(context_epochs)
 
-    # Terços
-    tep_plotter.plot_context_temporal_comparison(context_epochs, n_splits=3)
-
     # Apenas ctx_01, ctx_11, ctx_21 em terços com rótulos customizados
     tep_plotter.plot_context_temporal_comparison(
         context_epochs,
@@ -126,7 +123,7 @@ for subject_id in subjects:
     #  COLLECT RESULTS
     # ================================================================ #
 
-    all_results.append({
+    all_results.append({        #WORK HERE to include contexts amplitues
         "subject": subject_id,
         # Per-condition results
         "amplitude_N15_P30": amplitude_N15_P30,
