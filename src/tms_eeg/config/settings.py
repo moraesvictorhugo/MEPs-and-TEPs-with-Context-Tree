@@ -83,6 +83,20 @@ class AnalysisConfig:
     compute_lmfp: bool = True
     # Features
     calculate_p2p_amplitude: bool = True
+    # Context analysis
+    context_definitions: dict = field(default_factory=lambda: {
+        "ctx_0":  [0],        # atual=0, qualquer passado
+        "ctx_2":  [2],        # atual=2, qualquer passado
+        "ctx_01": [0, 1],     # anterior=0, atual=1
+        "ctx_11": [1, 1],     # anterior=1, atual=1
+        "ctx_21": [2, 1],     # anterior=2, atual=1
+    })
+    # Mapping: event code (from find_events) → context symbol
+    event_to_symbol: dict = field(default_factory=lambda: {
+        1: 0,   # 8Bit 1 → símbolo 0 (80% rMT)
+        2: 1,   # 8Bit 2 → símbolo 1 (100% rMT)
+        3: 2,   # 8Bit 3 → símbolo 2 (120% rMT)
+    })
 
 @dataclass
 class PlotConfig:

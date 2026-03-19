@@ -34,3 +34,15 @@ def load_data(config: ProjectConfig, data_type: str = "raw"):
         print(data.annotations)
 
     return data
+
+def get_raw_path(config: ProjectConfig) -> str:
+    """Retorna o caminho do arquivo raw processado para o sujeito."""
+    base_dir = Path(__file__).parents[3]
+    raw_dir = base_dir / "data" / "processed" / config.subject_id / "processed"
+
+    fif_files = list(raw_dir.glob("*_raw_processed.fif"))
+    if not fif_files:
+        raise FileNotFoundError(
+            f"Nenhum .fif encontrado em {raw_dir}"
+        )
+    return str(fif_files[0])
