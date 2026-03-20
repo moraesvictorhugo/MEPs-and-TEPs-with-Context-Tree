@@ -59,9 +59,9 @@ class FeatureExtractor:
         """
         Amplitude pico-a-pico entre dois componentes, calculada sobre
         o Evoked de cada condição/canal.
-        
-        Obs: A função assume que component1 é sempre negativo e component2 é
-        sempre positivo.
+
+        Identifica o pico real (maior deflexão em módulo) em cada janela,
+        independente da polaridade.
         """
         if evokeds is None:
             evokeds = self.get_evokeds()
@@ -77,14 +77,17 @@ class FeatureExtractor:
         for cond, evoked in evokeds.items():
             for ch in self.channels:
                 signal = evoked.copy().pick([ch]).data.squeeze()
-                val1 = signal[mask1].min()
-                val2 = signal[mask2].max()
+
+                seg1 = signal[mask1]
+                seg2 = signal[mask2]
+                val1 = seg1[np.argmax(np.abs(seg1))]
+                val2 = seg2[np.argmax(np.abs(seg2))]
 
                 rows.append({
                     "condition": cond,
                     "channel": ch,
                     "component": label,
-                    "peak_to_peak_uV": (val2 - val1) * 1e6,
+                    "peak_to_peak_uV": abs(val2 - val1) * 1e6,
                 })
 
         return pd.DataFrame(rows)

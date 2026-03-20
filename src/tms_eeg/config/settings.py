@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 
 @dataclass
 class IOConfig:
-    export_data: bool = False
+    export_data: bool = True
     change_channel_types: bool = False
     new_channel_names: dict = field(default_factory=dict)  # {"EEG 001": "Fp1"}
     save_figs: bool = False
@@ -107,7 +107,7 @@ class PlotConfig:
     plot_ica_components: bool = True
     # Figure saving options
     figure_format: str = "png"
-    figure_dpi: int = 300
+    figure_dpi: int = 600
     figure_subfolder: str = "figures"
     # TEP plotting options
     tep_xlim: tuple = (-0.01, 0.2)
