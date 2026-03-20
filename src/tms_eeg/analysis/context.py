@@ -16,8 +16,8 @@ class ContextMapper:
 
     def get_full_sequence(self, raw_path: str) -> np.ndarray:
         """
-        Carrega apenas os eventos do arquivo raw (sem dados em memória)
-        e retorna a sequência completa de símbolos.
+        Carrega o raw, aplica o AnnotationProcessor (mesmo pipeline do
+        pré-processamento) e extrai a sequência completa de símbolos.
 
         Parameters
         ----------
@@ -27,26 +27,29 @@ class ContextMapper:
         Returns
         -------
         symbols : np.ndarray, shape (n_events,)
-            Sequência de símbolos (0, 1, 2) na ordem original.
+            Sequência de símbolos na ordem original.
         event_indices : np.ndarray, shape (n_events,)
-            Índices (sample-based) originais de cada evento.
+            Índices posicionais de cada evento.
         """
+        from src.tms_eeg.preprocessing.annotation_processor import AnnotationProcessor
+        from src.tms_eeg.preprocessing.epoching import EEGEpocher
+
         raw = mne.io.read_raw(raw_path, preload=False, verbose=False)
 
-        trigger_codes = list(self.event_to_symbol.keys())
+        # Reproduz o mesmo processamento de annotations do pipeline
+        processor = AnnotationProcessor(self.config)
+        raw = processor.process_annotations(raw)
 
-        # Extrai eventos a partir das annotations
-        events, _ = mne.events_from_annotations(raw, verbose=False)
-
-        # Filtra apenas os eventos de interesse (trigger codes)
-        mask = np.isin(events[:, 2], trigger_codes)
-        events = events[mask]
+        # Usa o mesmo find_events para garantir consistência
+        epocher = EEGEpocher(self.config)
+        events, event_id = epocher.find_events(raw)
 
         symbols = np.array([
             self.event_to_symbol[code] for code in events[:, 2]
         ])
 
         return symbols, np.arange(len(symbols))
+
 
     def classify_epochs(
         self,
