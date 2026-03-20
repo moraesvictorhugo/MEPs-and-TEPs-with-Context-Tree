@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 
 @dataclass
 class IOConfig:
-    export_data: bool = True
+    export_data: bool = False
     change_channel_types: bool = False
     new_channel_names: dict = field(default_factory=dict)  # {"EEG 001": "Fp1"}
     save_figs: bool = False
@@ -123,7 +123,7 @@ class PlotConfig:
     ])
     # EMG plotting options
     emg_xlim: tuple = (-0.01, 0.08)
-    analysis_plots: bool = False
+    analysis_plots: bool = True
 
 @dataclass
 class ProjectConfig:
