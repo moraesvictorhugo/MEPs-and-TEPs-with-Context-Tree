@@ -31,6 +31,31 @@ Steps
     Reject trial if initial number of epochs exceed n=20
 '''
 
+'''
+To-Do for context tree retrieving:
+preprocessed data as .mat file (V01.mat) with a data struct with these fields:
+V01.mat
+└── data (struct)
+    ├── X_ter  →  [1 × N_ter]   sequência de símbolos ∈ {0, 1, 2}
+    │
+    └── Y_ter  →  {2 × E cell}  EEG segmentado
+                  ├── linha 1: nomes dos eletrodos  ('Fz', 'Cz', ...)
+                  └── linha 2: matrizes D × N_ter   (uma por eletrodo)
+                  
+Reformatar para o "molde" do .mat original               
+    - X_ter: array (1, N) float64                            
+    - Y_ter: array (2, E) object                             
+        ├── linha 0: strings dos eletrodos                   
+        └── linha 1: matrizes (D, N) float64 -> colunas são épocas e linhas são pontos no tempo em microVolts              
+    - Empacotar tudo num dict: {'data': {...}}            
+Salvar com scipy.io.savemat('V01.mat', {'data': ...})
+
+Exemplo em: /home/victomoraes/Documents/GitHub/EEG_Retrieving/statistical_analysis/EEGretrieving_pre/preprocessed_data/V01.mat
+
+- EEG epochs (15 ms to 415 ms) -> adapted to cut TMS artifact at 250 Hz of sampling rate
+'''
+
+
 # Settings
 config = ProjectConfig(subject_id="V00")
 
