@@ -18,25 +18,21 @@ from src.tms_eeg.visualization.tep_plots import TEPPlotter
 Steps
     Load data                                                                                    
     Find/create events                                                                           
-    Drop unused channels (e.g., EMG)                                                             
-    Remove TMS artifact using baseline data (window: -2 - 5ms)                                   
-    Filter raw EEG data (high-pass 1 Hz, low-pass: 250 Hz and notch filter 60 Hz)
-    Create epochs (-0.8 to 0.8)
+    Baseline correction (-200 ms to -10 ms)
+    Remove TMS Artifact using baseline data (window: -2 - 5 ms) applying 0 padding
+    Identify bad channels (max or min amplitude in baseline window exceeds median ± 10× IQR)
+    Reject blinking trials (blink topography of ICA)
+    SOUND (lambda = 0.1)
+    SSP-SIR with tweaked time-window identification and component rejection based on bandpower limits
+    Interpolate TMS pulse artifact time window (-2, 10 ms)
+    Notch filter (56-64 Hz) and bandpass filter (1-100 Hz)
+    Baseline correction
     Average reference
-    Remove bad channels (manual or threshold=3)
-    Remove bad epochs (manual or threshold=3)
-    First ICA (FastICA)
-    (Optional and very experimental) PARAFAC decomposition
-    (Optional) Second ICA (Infomax)
-    (Optional) SSP
-    Filter epoched data (low-pass 45 Hz)
-    Downsampling (725 Hz)
-    TEP plotting
-    PCIst
+    Reject trial if initial number of epochs exceed n=20
 '''
 
 # Settings
-config = ProjectConfig(subject_id="V07")
+config = ProjectConfig(subject_id="V00")
 
 # Load data
 raw_data = load_raw(config)
@@ -46,10 +42,10 @@ raw_data.set_channel_types({
     config.channels.eog_label: 'eog', config.channels.emg_label: 'emg'})
 raw_data.set_montage(config.channels.eeg_montage)
 
-# Drop unused channels
-raw_data.drop_channels(config.channels.bad_channels)
+# # Drop unused channels
+# raw_data.drop_channels(config.channels.bad_channels)
 
-# Artifact removal
+# Artifact removal -> só criação de eventos para baseline
 raw_data = ArtifactRemover(config).remove_tms_artifact(raw_data)
 
 # Filter raw EEG data
