@@ -53,9 +53,9 @@ Salvar com scipy.io.savemat('V01.mat', {'data': ...})
 Exemplo em: /home/victomoraes/Documents/GitHub/EEG_Retrieving/statistical_analysis/EEGretrieving_pre/preprocessed_data/V01.mat
 
 - EEG epochs (15 ms to 415 ms) -> adapted to cut TMS artifact at 250 Hz of sampling rate
+- Alternatively, use the -50 to 400 similarly to Hernandez et al. (2021)
 - Editar arquivo TERNARY_CONDITION.m to choice electrodes to analyze
 '''
-
 
 # Settings
 config = ProjectConfig(subject_id="V00")
