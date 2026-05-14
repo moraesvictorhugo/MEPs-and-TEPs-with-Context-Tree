@@ -2,7 +2,7 @@
 
 import pandas as pd
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 
 class MetricsCollector:
@@ -131,30 +131,6 @@ class MetricsCollector:
                 component=row["component"],
                 amplitude=row["peak_amplitude_uV"],
                 latency=row["peak_latency_ms"],
-            )
-
-    def collect_context_dict(
-        self,
-        subject: str,
-        ctx_dict: Dict[str, pd.DataFrame],
-        collector_func,
-        **kwargs,
-    ) -> None:
-        """Collect rows from a context dictionary {ctx_name: DataFrame}.
-
-        Args:
-            subject: Subject ID.
-            ctx_dict: Dictionary mapping context names to DataFrames.
-            collector_func: Method to call for each DataFrame (collect_peak_to_peak_from_df or collect_mfp_peaks_from_df).
-            **kwargs: Additional arguments passed to collector_func.
-        """
-        for ctx_name, df in ctx_dict.items():
-            collector_func(
-                subject=subject,
-                analysis_type="context",
-                df=df,
-                condition=ctx_name,
-                **kwargs,
             )
 
     def to_dataframe(self) -> pd.DataFrame:

@@ -182,35 +182,6 @@ class FeatureExtractor:
         return pd.DataFrame(rows)
 
     # ------------------------------------------------------------------ #
-    #  Summary DataFrame (all features in one table)
-    # ------------------------------------------------------------------ #
-
-    def compute_summary(self) -> pd.DataFrame:
-        """
-        Executa todas as extrações e retorna um DataFrame consolidado.
-        Inclui: GMFP peaks, LMFP peaks, peak-to-peak amplitudes.
-        """
-        gmfp = self.compute_gmfp()
-        lmfp = self.compute_lmfp()
-
-        df_gmfp = self.extract_mfp_peaks(gmfp, label="GMFP")
-        df_lmfp = self.extract_mfp_peaks(lmfp, label="LMFP")
-
-        # Peak-to-peak for consecutive component pairs
-        components = list(self.time_windows.keys())
-        p2p_frames = []
-        for i in range(len(components) - 1):
-            try:
-                df = self.peak_to_peak(components[i], components[i + 1])
-                p2p_frames.append(df)
-            except Exception:
-                continue
-
-        df_p2p = pd.concat(p2p_frames, ignore_index=True) if p2p_frames else pd.DataFrame()
-
-        return df_gmfp, df_lmfp, df_p2p
-
-    # ------------------------------------------------------------------ #
     #  Internal helpers
     # ------------------------------------------------------------------ #
 

@@ -18,10 +18,3 @@ def setup_plotting_backend():
     else:
         matplotlib.use("QtAgg")
         mne.viz.set_browser_backend("qt")
-        
-        
-        
-        
-        
-        
-        

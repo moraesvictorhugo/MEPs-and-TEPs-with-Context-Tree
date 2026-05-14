@@ -98,36 +98,3 @@ class EEGEpocher:
         )
 
         return epochs
-
-    @staticmethod
-    def reject_bad(epochs: mne.Epochs, thresholds: dict,
-                   flat_thresholds: dict = None) -> mne.Epochs:
-        """Reject bad epochs based on amplitude thresholds.
-
-        Args:
-            epochs (mne.Epochs): Epochs to process.
-            thresholds (dict): Max amplitude thresholds per channel type
-                (e.g. {"eeg": 150e-6}).
-            flat_thresholds (dict, optional): Min amplitude thresholds per
-                channel type. Defaults to None.
-
-        Returns:
-            mne.Epochs: Cleaned epochs (copy).
-        """
-        epochs = epochs.copy()
-
-        available = set(
-            mne.channel_type(epochs.info, i)
-            for i in range(len(epochs.ch_names))
-        )
-
-        reject = {k: v for k, v in thresholds.items() if k in available}
-        flat = (
-            {k: v for k, v in flat_thresholds.items() if k in available}
-            if flat_thresholds else None
-        )
-
-        epochs.drop_bad(reject=reject, flat=flat)
-        print(f"[EEGEpocher] Remaining epochs: {len(epochs)}/{len(epochs.drop_log)}")
-        return epochs
- 

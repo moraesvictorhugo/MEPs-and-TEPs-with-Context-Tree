@@ -1,6 +1,5 @@
 from src.tms_eeg.config.settings import ProjectConfig
 import mne
-import sklearn
 from pathlib import Path
 
 class EEGICA:
