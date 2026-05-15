@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 @dataclass
 class IOConfig:
-    export_data: bool = False
+    export_data: bool = True
     save_figs: bool = False
     name_to_symbol: dict = field(default_factory=lambda: {
     "8bit1": 0,

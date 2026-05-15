@@ -1,6 +1,5 @@
 from scipy.signal import detrend
 from pytep import apply_sspsir, apply_sound
-import mne
 
 # Set backend
 from src.tms_eeg.config.environment import setup_plotting_backend
@@ -118,7 +117,7 @@ writer.save_emg_epochs(epochs_emg_filtered, 'emg_processed')
 # Export epochs
 writer.save_epochs(epochs_eeg_filtered, 'processed')
 
-# Export to .mat for ContextTree analysis (MATLAB)
+# Export to .mat for ContextTree analysis (MATLAB) -> FIX!
 writer.save_epochs_to_mat(epochs_eeg_filtered)
 
 

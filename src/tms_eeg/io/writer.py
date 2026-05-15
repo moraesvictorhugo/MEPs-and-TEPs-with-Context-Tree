@@ -168,100 +168,63 @@ class Writer:
     def save_epochs_to_mat(
         self,
         epochs: mne.Epochs,
+        symbol_sequence: np.ndarray,
         subfolder: str = "processed",
-        post_pulse_window: tuple = (0.015, 0.450),
-        pre_pos_pulse_window: tuple = (-0.050, 0.400),
+        window: tuple = (0.015, 0.450),
     ) -> None:
         """
-        Save epochs to a MATLAB .mat file with two time windows and context symbols.
+        Save epochs to a .mat file matching the context-tree pipeline format.
 
-        The output file contains:
-            - X: post-pulse data, shape (n_channels, n_times_post, n_epochs)
-            - X_pre_pos_pulse: pre/post-pulse data, shape (n_channels, n_times_pre, n_epochs)
-            - X_ter: context symbol per epoch (0, 1 or 2), shape (n_epochs, 1)
-            - fs: sampling frequency (Hz)
-            - ch_names: list of channel names
-            - times_post / times_pre: time vectors (seconds) for each window
-
-        The mapping from epoch event name to symbol uses
-        `config.analysis.name_to_symbol` after normalization
-        (lowercase + whitespace removed), so it is robust to label
-        variations like "8Bit 1", "8bit 1", "8 bit1", etc.
+        Output MATLAB structure (variable name: `data`):
+            data.X_ter : 1 x N_symbols double  -> context-tree symbol sequence (0/1/2)
+            data.Y_ter : 2 x N_channels cell
+                row 1 -> channel name (char)
+                row 2 -> (n_samples x n_epochs) double matrix in microvolts
 
         Parameters
         ----------
         epochs : mne.Epochs
-            Epochs object to be exported. Must contain event names that
-            normalize to keys present in `config.analysis.name_to_symbol`.
+            Epochs object (data assumed in Volts, MNE default).
+        symbol_sequence : np.ndarray
+            1-D array of context-tree symbols (length can differ from n_epochs).
         subfolder : str
-            Subfolder within the subject's processed directory (default: 'processed').
-        post_pulse_window : tuple
-            (tmin, tmax) in seconds for the post-pulse window. Default: (0.015, 0.450).
-        pre_pos_pulse_window : tuple
-            (tmin, tmax) in seconds for the pre/post-pulse window. Default: (-0.050, 0.400).
-
-        Raises
-        ------
-        ValueError
-            If an epoch's event name cannot be mapped to a symbol.
+            Subfolder within processed dir.
+        window : tuple
+            (tmin, tmax) in seconds to crop before exporting.
         """
-        # Check if export is enabled
         if not self.config.io.export_data:
             print("Export skipped: export_data is set to False in configuration")
             return
 
-        # --- 1. Build symbol vector (X_ter) from epochs.events + epochs.event_id ---
-        name_to_symbol = self.config.analysis.name_to_symbol
+        # --- 1. Crop to desired window ---
+        ep = epochs.copy().crop(tmin=window[0], tmax=window[1])
 
-        def _normalize(name: str) -> str:
-            """Lowercase and remove all whitespace."""
-            return re.sub(r"\s+", "", str(name).lower())
+        # --- 2. Get data and convert V -> uV ---
+        # MNE shape: (n_epochs, n_channels, n_samples)
+        arr = ep.get_data() * 1e6  # to microvolts
+        n_epochs, n_channels, n_samples = arr.shape
 
-        # Reverse map: numeric code → event name (string)
-        code_to_name = {code: name for name, code in epochs.event_id.items()}
+        # --- 3. Build Y_ter cell (2 x n_channels) ---
+        # Row 0: channel name (str)
+        # Row 1: matrix (n_samples, n_epochs) double
+        Y_ter = np.empty((2, n_channels), dtype=object)
+        for ch_idx, ch_name in enumerate(ep.ch_names):
+            Y_ter[0, ch_idx] = str(ch_name)
+            # arr[:, ch_idx, :] has shape (n_epochs, n_samples) -> transpose
+            Y_ter[1, ch_idx] = arr[:, ch_idx, :].T.astype(np.float64)
 
-        symbols = np.empty(len(epochs), dtype=np.int32)
-        for i, code in enumerate(epochs.events[:, 2]):
-            name = code_to_name.get(int(code))
-            if name is None:
-                raise ValueError(
-                    f"[Writer] Epoch {i}: event code {code} not found in "
-                    f"epochs.event_id ({epochs.event_id})."
-                )
-            norm = _normalize(name)
-            if norm not in name_to_symbol:
-                raise ValueError(
-                    f"[Writer] Epoch {i}: event name '{name}' (normalized: '{norm}') "
-                    f"not found in config.analysis.name_to_symbol "
-                    f"({list(name_to_symbol.keys())})."
-                )
-            symbols[i] = name_to_symbol[norm]
+        # --- 4. Build X_ter as 1 x N row vector of double ---
+        X_ter = np.asarray(symbol_sequence, dtype=np.float64).reshape(1, -1)
 
-        X_ter = symbols.reshape(-1, 1)  # column vector (n_epochs, 1)
-
-        # --- 2. Crop both time windows (without modifying the original) ---
-        epochs_post = epochs.copy().crop(tmin=post_pulse_window[0],
-                                        tmax=post_pulse_window[1])
-        epochs_pre = epochs.copy().crop(tmin=pre_pos_pulse_window[0],
-                                        tmax=pre_pos_pulse_window[1])
-
-        # MNE shape: (n_epochs, n_channels, n_times)
-        # MATLAB convention: (n_channels, n_times, n_epochs) → transpose (1, 2, 0)
-        X = epochs_post.get_data().transpose(1, 2, 0)
-        X_pre_pos_pulse = epochs_pre.get_data().transpose(1, 2, 0)
-
-        # --- 3. Build output dictionary ---
+        # --- 5. Wrap in 'data' struct ---
         mat_dict = {
-            "X": X.astype(np.float32),
-            "X_pre_pos_pulse": X_pre_pos_pulse.astype(np.float32),
-            "X_ter": X_ter,
-            "fs": float(epochs.info["sfreq"]),
-            "ch_names": np.array(epochs.ch_names, dtype=object),
-            "times_post": epochs_post.times.astype(np.float64),
-            "times_pre": epochs_pre.times.astype(np.float64),
+            "data": {
+                "X_ter": X_ter,
+                "Y_ter": Y_ter,
+            }
         }
 
-        # --- 4. Save ---
+        # --- 6. Save ---
         processed_dir = self._create_processed_dir() / subfolder
         processed_dir.mkdir(exist_ok=True)
 
@@ -269,11 +232,11 @@ class Writer:
         full_path = processed_dir / filename
 
         print(f"Saving .mat file to: {full_path}")
-        print(f"  X shape: {X.shape} (channels, times, epochs)")
-        print(f"  X_pre_pos_pulse shape: {X_pre_pos_pulse.shape}")
-        print(f"  X_ter shape: {X_ter.shape}  | unique symbols: {np.unique(X_ter).tolist()}")
-        print(f"  fs: {mat_dict['fs']} Hz | n_channels: {len(epochs.ch_names)}")
+        print(f"  data.X_ter shape: {X_ter.shape} | unique: {np.unique(X_ter).tolist()}")
+        print(f"  data.Y_ter shape: {Y_ter.shape} (2 x n_channels)")
+        print(f"  Each Y_ter{{2,k}} matrix: ({n_samples} samples x {n_epochs} epochs) in uV")
 
-        savemat(full_path, mat_dict, do_compression=True)
+        savemat(full_path, mat_dict, do_compression=True, long_field_names=True)
         print(".mat file saved successfully!")
+
 
