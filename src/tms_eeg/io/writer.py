@@ -196,8 +196,8 @@ class Writer:
             print("Export skipped: export_data is set to False in configuration")
             return
 
-        # --- 1. Crop to desired window ---
-        ep = epochs.copy().crop(tmin=window[0], tmax=window[1])
+        # --- 1. Pick EEG channels and crop to desired window ---
+        ep = epochs.copy().pick("eeg").crop(tmin=window[0], tmax=window[1])
 
         # --- 2. Get data and convert V -> uV ---
         # MNE shape: (n_epochs, n_channels, n_samples)

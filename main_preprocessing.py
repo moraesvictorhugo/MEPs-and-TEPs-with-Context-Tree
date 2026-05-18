@@ -15,6 +15,8 @@ from src.tms_eeg.preprocessing.downsampling import Downsampler
 from src.tms_eeg.preprocessing.epoching import EEGEpocher
 from src.tms_eeg.preprocessing.filtering import Filter
 from src.tms_eeg.preprocessing.ica import EEGICA
+from src.tms_eeg.preprocessing.annotation_exporter import EpochAnnotationExporter
+
 
 """
 Steps
@@ -95,6 +97,8 @@ epochs_eeg.set_eeg_reference(config.channels.eeg_reference)
 # Apply SSP-SIR
 epochs_eeg = apply_sspsir(epochs_eeg)
 
+# Interpolate?
+
 # Filter EEG data
 epochs_eeg_filtered = Filter(config).eeg_bp_filter(epochs_eeg)
 epochs_eeg_filtered = Filter(config).notch_filter_epochs(epochs_eeg, band=(58, 62))
@@ -110,39 +114,18 @@ epochs_eeg_filtered.plot()
 epochs_eeg_filtered = Downsampler(config).downsample(epochs_eeg_filtered)
 epochs_emg_filtered = Downsampler(config).downsample_emg_channels(epochs_emg_filtered)
 
+# Get epochs indexes and annotations from EEG and EMG epochs using the exporter
+exporter = EpochAnnotationExporter(config)
+eeg_epochs_indexes, eeg_epochs_annotations = exporter.extract_annotations(epochs_eeg_filtered)
+emg_epochs_indexes, emg_epochs_annotations = exporter.extract_annotations(epochs_emg_filtered)
+
+# Export to .mat for ContextTree analysis (MATLAB) using the exporter
+symbols = exporter.map_annotations_to_symbols(eeg_epochs_annotations)
+exporter.export_to_mat(writer, epochs_eeg_filtered, symbols)
+
 # Export processed data
 writer = Writer(config)
 writer.save_emg_epochs(epochs_emg_filtered, 'emg_processed')
 
 # Export epochs
 writer.save_epochs(epochs_eeg_filtered, 'processed')
-
-# Export to .mat for ContextTree analysis (MATLAB) -> FIX!
-writer.save_epochs_to_mat(epochs_eeg_filtered)
-
-
-"""
-To-Do for context tree retrieving:
-preprocessed data as .mat file (V01.mat) with a data struct with these fields:
-V01.mat
-└── data (struct)
-    ├── X_ter  →  [1 × N_ter]   sequência de símbolos ∈ {0, 1, 2}
-    │
-    └── Y_ter  →  {2 × E cell}  EEG segmentado
-                  ├── linha 1: nomes dos eletrodos  ('Fz', 'Cz', ...)
-                  └── linha 2: matrizes D × N_ter   (uma por eletrodo)
-
-Reformatar para o "molde" do .mat original
-    - X_ter: array (1, N) float64
-    - Y_ter: array (2, E) object
-        ├── linha 0: strings dos eletrodos
-        └── linha 1: matrizes (D, N) float64 -> colunas são épocas e linhas são pontos no tempo em microVolts
-    - Empacotar tudo num dict: {'data': {...}}
-Salvar com scipy.io.savemat('V01.mat', {'data': ...})
-
-Exemplo em: /home/victomoraes/Documents/GitHub/EEG_Retrieving/statistical_analysis/EEGretrieving_pre/preprocessed_data/V01.mat
-
-- EEG epochs (15 ms to 415 ms) -> adapted to cut TMS artifact at 250 Hz of sampling rate
-- Alternatively, use the -50 to 400 similarly to Hernandez et al. (2021)
-- Editar arquivo TERNARY_CONDITION.m to choice electrodes to analyze
-"""
