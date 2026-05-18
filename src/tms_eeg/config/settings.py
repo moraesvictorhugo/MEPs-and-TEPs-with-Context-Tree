@@ -4,11 +4,6 @@ from dataclasses import dataclass, field
 class IOConfig:
     export_data: bool = True
     save_figs: bool = False
-    name_to_symbol: dict = field(default_factory=lambda: {
-    "8bit1": 0,
-    "8bit2": 1,
-    "8bit3": 2,
-    })
 
 @dataclass
 class EventConfig:

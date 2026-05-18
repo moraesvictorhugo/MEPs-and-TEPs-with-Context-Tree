@@ -28,11 +28,6 @@ def load_data(config: ProjectConfig, data_type: str = "raw"):
     else:
         raise ValueError(f"data_type inválido: '{data_type}'. Use 'raw' or 'epochs'.")
 
-    print(data.info)
-    print(data.ch_names)
-    if hasattr(data, "annotations"):
-        print(data.annotations)
-
     return data
 
 def get_raw_path(config: ProjectConfig) -> str:

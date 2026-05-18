@@ -1,15 +1,16 @@
 """Group-level analysis utilities for collecting and aggregating metrics."""
 
+from __future__ import annotations
+
 import pandas as pd
 from pathlib import Path
-from typing import List, Optional
 
 
 class MetricsCollector:
     """Collects metrics in tidy (long) format for statistical analysis."""
 
     def __init__(self):
-        self.rows: List[Dict] = []
+        self.rows: list[dict] = []
 
     def add_row(
         self,
@@ -141,7 +142,7 @@ class MetricsCollector:
         self,
         output_path: str = "data/group/all_subjects_metrics.csv",
         export_enabled: bool = True,
-    ) -> Optional[pd.DataFrame]:
+    ) -> pd.DataFrame | None:
         """Export collected rows to CSV if enabled.
 
         Args:

@@ -5,7 +5,6 @@ from matplotlib.figure import Figure
 from pathlib import Path
 from typing import Optional
 
-import re
 import numpy as np
 from scipy.io import savemat
 
@@ -232,9 +231,6 @@ class Writer:
         full_path = processed_dir / filename
 
         print(f"Saving .mat file to: {full_path}")
-        print(f"  data.X_ter shape: {X_ter.shape} | unique: {np.unique(X_ter).tolist()}")
-        print(f"  data.Y_ter shape: {Y_ter.shape} (2 x n_channels)")
-        print(f"  Each Y_ter{{2,k}} matrix: ({n_samples} samples x {n_epochs} epochs) in uV")
 
         savemat(full_path, mat_dict, do_compression=True, long_field_names=True)
         print(".mat file saved successfully!")

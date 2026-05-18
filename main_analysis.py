@@ -188,7 +188,7 @@ for subject_id in subjects:
             subject_id, "context", df, "LMFP"
         )
 
-    ####    
+    
     
     # ── MFP Plots por contexto ───────────────────────────────────────
     mfp_plotter.plot_overlay(

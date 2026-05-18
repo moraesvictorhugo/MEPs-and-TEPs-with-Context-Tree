@@ -218,7 +218,7 @@ class TEPPlotter:
         if len(split_labels) != n_splits:
             raise ValueError("split_labels deve ter comprimento igual a n_splits.")
 
-        cmap = plt.cm.get_cmap("tab10")
+        cmap = plt.colormaps["tab10"]
 
         for ctx in contexts:
             if ctx not in context_epochs:

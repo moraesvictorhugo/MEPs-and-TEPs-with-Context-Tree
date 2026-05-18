@@ -121,10 +121,10 @@ emg_epochs_indexes, emg_epochs_annotations = exporter.extract_annotations(epochs
 
 # Export to .mat for ContextTree analysis (MATLAB) using the exporter
 symbols = exporter.map_annotations_to_symbols(eeg_epochs_annotations)
+writer = Writer(config)
 exporter.export_to_mat(writer, epochs_eeg_filtered, symbols)
 
 # Export processed data
-writer = Writer(config)
 writer.save_emg_epochs(epochs_emg_filtered, 'emg_processed')
 
 # Export epochs
