@@ -17,7 +17,6 @@ from src.tms_eeg.preprocessing.filtering import Filter
 from src.tms_eeg.preprocessing.ica import EEGICA
 from src.tms_eeg.preprocessing.annotation_exporter import EpochAnnotationExporter
 
-
 """
 Steps
     Load data
@@ -86,7 +85,7 @@ epochs_eeg = ica_processor.apply_ica(epochs_eeg, components_to_remove=[0])
 epochs_eeg.plot(block = False)
 
 # Baseline correction
-epochs_eeg.apply_baseline(baseline=(-0.5, -0.01))
+epochs_eeg.apply_baseline(baseline=(-0.2, -0.01))
 
 # Apply SOUND
 epochs_eeg = apply_sound(epochs_eeg, iter_num=5, lambda_val=0.1)
@@ -97,7 +96,8 @@ epochs_eeg.set_eeg_reference(config.channels.eeg_reference)
 # Apply SSP-SIR
 epochs_eeg = apply_sspsir(epochs_eeg)
 
-# Interpolate?
+# 
+epochs_eeg.resample(5000)  # ou 2000, ou 1000 dependendo da análise
 
 # Filter EEG data
 epochs_eeg_filtered = Filter(config).eeg_bp_filter(epochs_eeg)

@@ -8,10 +8,10 @@ class Filter:
     def __init__(self, config: ProjectConfig):
         self.config = config
 
-    def eeg_bp_filter(self, raw) -> 'mne.io.BaseRaw':
+    def eeg_bp_filter(self, inst):
         """Apply bandpass filter to raw EEG data."""
         bp = self.config.filters.eeg_bandpass
-        filtered = raw.copy().filter(l_freq=bp[0], h_freq=bp[1], picks='eeg')
+        filtered = inst.copy().filter(l_freq=bp[0], h_freq=bp[1], picks='eeg')
         
         return filtered
         
