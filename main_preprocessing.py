@@ -11,10 +11,11 @@ from tms_eeg.io.writer import Writer
 from tms_eeg.preprocessing.annotation_processor import AnnotationProcessor
 from tms_eeg.preprocessing.artifacts import ArtifactRemover
 from tms_eeg.preprocessing.downsampling import Downsampler
-from tms_eeg.preprocessing.epoching import EEGEpocher
+from tms_eeg.preprocessing.epoching import EEGEpocher, EpochDropper
 from tms_eeg.preprocessing.filtering import Filter
 from tms_eeg.preprocessing.ica import EEGICA
 from tms_eeg.preprocessing.annotation_exporter import EpochAnnotationExporter
+from tms_eeg.visualization.tep_plots import TEPPlotter
 
 setup_plotting_backend()
 
@@ -70,12 +71,15 @@ epochs_eeg = ArtifactRemover(config).remove_tms_artifact(epochs_eeg)
 # Remove bad channels (TP9, TP10, O1, O2, Iz)
 epochs_eeg.drop_channels(["TP9", "TP10", "O1", "O2", "Iz"])
 
-# Remove bad trials (noise and blinks) -> Manual Procedure
-epochs_eeg.plot()
-
 # Drop bad marked channels
 epochs_eeg.drop_channels(epochs_eeg.info['bads'])
-epochs_eeg.drop([10, 11, 12, 13, 14, 15, 17])
+
+# Verify bad epochs -> skip if already on json
+epochs_eeg.plot()
+
+# Remove bad trials using pre-identified epoch indices from JSON
+epochs_eeg = EpochDropper(config).drop_from_json(epochs_eeg,
+    "data/idx_epochs_rem_1st_run.json")
 
 # Linear Detrend in each epoch and channel
 epochs_eeg.apply_function(lambda x: detrend(x, type='linear'), picks='all')
@@ -121,33 +125,20 @@ epochs_emg_filtered = Filter(config).bp_filter(epochs_emg, ch_type='emg')
 epochs_emg_filtered = Filter(config).notch_filter(
     epochs_emg_filtered, band=(58, 62))
 
-# Remove bad trials (noise) -> Manual Procedure
+# Verify bad epochs -> skip if already on json
 epochs_eeg_filtered.plot()
 
-########################## Temp
-# TEP Plots
-import matplotlib.pyplot as plt
+# Remove bad trials using pre-identified epoch indices from JSON
+epochs_eeg_filtered = EpochDropper(config).drop_from_json(epochs_eeg_filtered,
+    "data/idx_epochs_rem_2nd_run.json")
 
-canais = ["F5", "C3", "FC1", "CP1", "CP5", "C4"]
-
-evoked_roi = (
-    epochs_eeg_filtered.average()
-    .pick(canais)
-    .crop(tmin=-0.010, tmax=0.100)
+# TEP Plots for picked channels
+tep_plotter = TEPPlotter(config)
+tep_plotter.plot_evoked_by_symbol(
+    epochs_eeg_filtered,
+    picks=["FC1", "FC5", "C3", "C4", "CP1", "CP5"],
+    xlim=(-0.1, 0.4),
 )
-
-fig, axes = plt.subplots(2, 3, figsize=(12, 8), sharex=True, sharey=True)
-for ax, canal in zip(axes.flat, canais):
-    evoked_roi.plot(picks=canal, axes=ax, show=False, selectable=False, ylim=dict(eeg=[-5, 5]))
-    ax.set_title(canal)
-    ax.axvline(0, color="k", ls="--", lw=0.8)
-    ax.axhline(0, color="k", lw=0.5)
-
-fig.suptitle("Evoked médio (-5 a 200 ms)", fontsize=13)
-fig.tight_layout()
-plt.show()
-
-#########################
 
 # Get epochs indexes and annotations from EEG and EMG epochs using the exporter
 exporter = EpochAnnotationExporter(config)

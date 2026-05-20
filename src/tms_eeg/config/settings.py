@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 @dataclass
 class IOConfig:
-    export_data: bool = True
+    export_data: bool = False
     save_figs: bool = False
 
 @dataclass
