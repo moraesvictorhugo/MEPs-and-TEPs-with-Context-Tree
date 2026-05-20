@@ -26,10 +26,9 @@ class ArtifactConfig:
 
 @dataclass
 class FilterConfig:
-    eeg_bandpass: tuple = (1, 250)
+    eeg_bandpass: tuple = (None, 80)
     emg_bandpass: tuple = (20, 500)
     notch: tuple = (60, 120, 180, 240, 300)
-    eeg_bandpass_epochs: tuple = (None, 45)
 
 @dataclass
 class ChannelConfig:
@@ -41,8 +40,8 @@ class ChannelConfig:
 @dataclass
 class EpochConfig:
     window: tuple = (-0.8, 0.8)
-    baseline: tuple = (-0.5, -0.01)
-    downsample_freq: float = 725.0
+    baseline: tuple = (-0.2, -0.01)
+    downsample_freq: float = 1000.0
     emg_downsample_freq: float = 3000.0
 
 @dataclass
