@@ -2,7 +2,6 @@
 
 import mne
 from typing import List, Optional, Dict
-from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -38,7 +37,7 @@ class TEPPlotter:
             if self.writer:
                 writer = self.writer
             else:
-                from src.tms_eeg.io.writer import Writer
+                from tms_eeg.io.writer import Writer
                 writer = Writer(self.config)
             
             filename = f"tep_{name}_{condition}"
@@ -49,6 +48,7 @@ class TEPPlotter:
         epochs: mne.Epochs,
         picks: Optional[List[str]] = None,
         xlim: tuple = None,
+        ylim: tuple = None,
     ):
         """
         Plota overlay dos evokeds médios por símbolo (8bit 0, 1, 2) para canais selecionados.
@@ -61,6 +61,8 @@ class TEPPlotter:
             Canais a plotar. Default: roi_picks do config.
         xlim : tuple, optional
             Janela temporal em segundos. Default: tep_xlim do config.
+        ylim : tuple, optional
+            Limites do eixo Y em µV. Default: None (autoescala).
         """
         if self.config and not self.config.plots.analysis_plots:
             return
@@ -112,6 +114,8 @@ class TEPPlotter:
                     linewidth=1.4,
                 )
             ax.set_xlim(xlim_ms)
+            if ylim is not None:
+                ax.set_ylim(ylim)
             ax.set_xlabel("Time (ms)")
             ax.set_ylabel("Amplitude (µV)")
             ax.set_title(f"Average TEP by Symbol — {ch}")

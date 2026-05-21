@@ -138,6 +138,7 @@ tep_plotter.plot_evoked_by_symbol(
     epochs_eeg_filtered,
     picks=["FC1", "FC5", "C3", "C4", "CP1", "CP5"],
     xlim=(-0.1, 0.4),
+    ylim=(-10,10)
 )
 
 # Get epochs indexes and annotations from EEG and EMG epochs using the exporter
