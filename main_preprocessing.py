@@ -38,9 +38,9 @@ Steps
     Export .mat and .fif file 
     
 """
-
+##############################################################################
 # Settings
-config = ProjectConfig(subject_id="V03")
+config = ProjectConfig(subject_id="V06")
 
 # Load data
 raw_data = load_data(config)
@@ -71,7 +71,7 @@ tep_plotter.plot_evoked_by_symbol(
     epochs_eeg,
     picks=["FC1", "FC5", "C3", "C4", "CP1", "CP5"],
     xlim=(-0.01, 0.015),
-    ylim=(-200, 200)
+    ylim=(-30, 30)
 )
 
 ###########################################################################
@@ -79,14 +79,26 @@ tep_plotter.plot_evoked_by_symbol(
 # Artifact removal
 epochs_eeg = ArtifactRemover(config).remove_tms_artifact(epochs_eeg, mode='cubic')
 
+tep_plotter.plot_evoked_by_symbol(
+    epochs_eeg,
+    picks=["FC1", "FC5", "C3", "C4", "CP1", "CP5"],
+    xlim=(-0.01, 0.2),
+    ylim=(-30, 30)
+)
+
 # Remove bad channels (TP9, TP10, O1, O2, Iz)
 epochs_eeg.drop_channels(["TP9", "TP10", "O1", "O2", "Iz"])
 
-# Drop bad marked channels
-epochs_eeg.drop_channels(epochs_eeg.info['bads'])
-
 # Verify bad epochs -> skip if already on json
 epochs_eeg.plot()
+
+###########################################################################
+
+# Drop bad marked channels
+#epochs_eeg.drop_channels(epochs_eeg.info['bads'])
+
+# Interpolate channels marked as bad if needed
+epochs_eeg.interpolate_bads(reset_bads=True)
 
 # Remove bad trials using pre-identified epoch indices from JSON
 epochs_eeg = EpochDropper(config).drop_from_json(epochs_eeg,
@@ -103,9 +115,10 @@ ica_processor = EEGICA(config)
 ica_processor.fit_ica(epochs_eeg)
 ica_processor.plot_components(epochs_eeg)
 
+############################################################################
+
 # Check and remove eye component
 epochs_eeg = ica_processor.apply_ica(epochs_eeg, components_to_remove=[0])
-epochs_eeg.plot(block = False)
 
 # Baseline correction
 epochs_eeg.apply_baseline(baseline=(-0.2, -0.01))
@@ -119,26 +132,28 @@ epochs_eeg.set_eeg_reference(config.channels.eeg_reference)
 # Apply SSP-SIR
 epochs_eeg = apply_sspsir(epochs_eeg)
 
-# Downsampling to 725 Hz
+# Downsampling to 1000 and 3000 Hz
 epochs_eeg = Downsampler(config).downsample(epochs_eeg)
 epochs_emg = Downsampler(config).downsample_emg_channels(epochs_emg)
 
 # Interpolate again
 import mne
-epochs_eeg = mne.preprocessing.fix_stim_artifact(epochs_eeg, mode='constant', tmin=-0.002, tmax=0.010, baseline=(-0.005, -0.002))
+epochs_eeg = mne.preprocessing.fix_stim_artifact(epochs_eeg, mode='constant', tmin=-0.002, tmax=0.015, baseline=(-0.005, -0.002))
 
 # Filter EEG data
 epochs_eeg_filtered = Filter(config).bp_filter(epochs_eeg, ch_type='eeg')
 epochs_eeg_filtered = Filter(config).notch_filter(
-    epochs_eeg_filtered, band=(58, 62))
+    epochs_eeg_filtered, band=(58, 62), harmonics=3)
 
 # Filter EMG data
 epochs_emg_filtered = Filter(config).bp_filter(epochs_emg, ch_type='emg')
 epochs_emg_filtered = Filter(config).notch_filter(
-    epochs_emg_filtered, band=(58, 62))
+    epochs_emg_filtered, band=(58, 62), harmonics=3)
 
 # Verify bad epochs -> skip if already on json
 epochs_eeg_filtered.plot()
+
+#########################################################################################
 
 # Remove bad trials using pre-identified epoch indices from JSON
 epochs_eeg_filtered = EpochDropper(config).drop_from_json(epochs_eeg_filtered,
@@ -149,24 +164,95 @@ tep_plotter = TEPPlotter(config)
 tep_plotter.plot_evoked_by_symbol(
     epochs_eeg_filtered,
     picks=["FC1", "FC5", "C3", "C4", "CP1", "CP5"],
-    xlim=(-0.1, 0.4),
+    xlim=(-0.05, 0.2),
     ylim=(-10,10)
 )
 
-# Get epochs indexes and annotations from EEG and EMG epochs using the exporter
+#########################################################################################
+# CROPPED EEG EPOCHS
+#########################################################################################
+
+epochs_eeg_filtered_pre_and_post_stim = (
+    epochs_eeg_filtered.copy().crop(tmin=-0.05, tmax=0.4)
+)
+
+epochs_eeg_filtered_post_stim = (
+    epochs_eeg_filtered.copy().crop(tmin=0.015, tmax=0.2)
+)
+
+#########################################################################################
+# INITIALIZE EXPORTER / WRITER
+#########################################################################################
+
 exporter = EpochAnnotationExporter(config)
-eeg_epochs_indexes, eeg_epochs_annotations = exporter.extract_annotations(
-    epochs_eeg_filtered)
-emg_epochs_indexes, emg_epochs_annotations = exporter.extract_annotations(
-    epochs_emg_filtered)
-
-# Export to .mat for ContextTree analysis (MATLAB) using the exporter
-symbols = exporter.map_annotations_to_symbols(eeg_epochs_annotations)
 writer = Writer(config)
-exporter.export_to_mat(writer, epochs_eeg_filtered, symbols)
 
-# Export processed data
-writer.save_emg_epochs(epochs_emg_filtered, 'emg_processed')
+#########################################################################################
+# FULL EEG EPOCHS
+#########################################################################################
 
-# Export epochs
-writer.save_epochs(epochs_eeg_filtered, 'processed')
+writer.save_epochs(
+    epochs_eeg_filtered,
+    'processed_full'
+)
+
+#########################################################################################
+# PRE + POST STIM EEG
+#########################################################################################
+
+eeg_indexes_prepost, eeg_annotations_prepost = exporter.extract_annotations(
+    epochs_eeg_filtered_pre_and_post_stim
+)
+
+symbols_prepost = exporter.map_annotations_to_symbols(
+    eeg_annotations_prepost
+)
+
+exporter.export_to_mat(
+    writer,
+    epochs_eeg_filtered_pre_and_post_stim,
+    symbols_prepost,
+    subfolder="processed_pre_and_post"
+)
+
+writer.save_epochs(
+    epochs_eeg_filtered_pre_and_post_stim,
+    'processed_pre_and_post'
+)
+
+#########################################################################################
+# POST STIM ONLY EEG
+#########################################################################################
+
+eeg_indexes_post, eeg_annotations_post = exporter.extract_annotations(
+    epochs_eeg_filtered_post_stim
+)
+
+symbols_post = exporter.map_annotations_to_symbols(
+    eeg_annotations_post
+)
+
+exporter.export_to_mat(
+    writer,
+    epochs_eeg_filtered_post_stim,
+    symbols_post,
+    subfolder="processed_post_only"
+)
+
+writer.save_epochs(
+    epochs_eeg_filtered_post_stim,
+    'processed_post_only'
+)
+
+#########################################################################################
+# EMG
+#########################################################################################
+
+emg_epochs_indexes, emg_epochs_annotations = exporter.extract_annotations(
+    epochs_emg_filtered
+)
+
+writer.save_emg_epochs(
+    epochs_emg_filtered,
+    'emg_processed'
+)

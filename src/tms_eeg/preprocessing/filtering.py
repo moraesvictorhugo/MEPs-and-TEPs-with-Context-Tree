@@ -21,16 +21,8 @@ class Filter:
             verbose=True,
         )
     
-    def notch_filter(self, data, band=None):
-        """Apply notch filter using scipy.iirnotch.
-        
-        Parameters
-        ----------
-        data : Raw or Epochs
-        band : tuple(float, float), optional
-            (low, high) band to notch. If None, uses config.filters.notch
-            with Q=30.
-        """
+    def notch_filter(self, data, band=None, harmonics=1):
+        """Apply notch filter using scipy.iirnotch."""
         data = data.copy().load_data()
         sfreq = data.info['sfreq']
         arr = data.get_data()
@@ -39,15 +31,26 @@ class Filter:
             low, high = band
             f0 = (low + high) / 2
             Q = f0 / (high - low)
-            b, a = iirnotch(w0=f0, Q=Q, fs=sfreq)
-            arr = filtfilt(b, a, arr, axis=-1)
+
+            for h in range(1, harmonics + 1):
+                f = f0 * h
+                if f >= sfreq / 2:
+                    break
+                b, a = iirnotch(w0=f, Q=Q, fs=sfreq)
+                arr = filtfilt(b, a, arr, axis=-1)
+
         else:
             notch_freqs = self.config.filters.notch
             if isinstance(notch_freqs, (int, float)):
                 notch_freqs = [notch_freqs]
+
             for f0 in notch_freqs:
-                b, a = iirnotch(w0=f0, Q=30, fs=sfreq)
-                arr = filtfilt(b, a, arr, axis=-1)
+                for h in range(1, harmonics + 1):
+                    f = f0 * h
+                    if f >= sfreq / 2:
+                        break
+                    b, a = iirnotch(w0=f, Q=30, fs=sfreq)
+                    arr = filtfilt(b, a, arr, axis=-1)
 
         data._data[:] = arr
         return data
