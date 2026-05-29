@@ -16,13 +16,16 @@ class ArtifactRemover:
     def remove_tms_artifact(
         self,
         inst: Union[mne.io.BaseRaw, mne.BaseEpochs],
+        mode: str | None = None,
     ) -> Union[mne.io.BaseRaw, mne.BaseEpochs]:
+
         artifact_cfg = self.config.artifact
         window = artifact_cfg.window_removal_artifact
-        mode = artifact_cfg.mode_removal_artifact
+        mode = mode or artifact_cfg.mode_removal_artifact
 
         if mode in self.MNE_MODES:
             return self._remove_with_mne(inst, window, mode)
+
         elif mode in self.CUSTOM_MODES:
             if not isinstance(inst, mne.BaseEpochs):
                 raise TypeError(
@@ -30,6 +33,7 @@ class ArtifactRemover:
                     f"got {type(inst).__name__}."
                 )
             return self._interpolate_cubic(inst, window)
+
         else:
             allowed = self.MNE_MODES | self.CUSTOM_MODES
             raise ValueError(

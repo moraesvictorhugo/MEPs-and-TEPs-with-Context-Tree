@@ -2,7 +2,6 @@
 
 import mne
 from typing import List, Optional, Dict
-from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -38,11 +37,94 @@ class TEPPlotter:
             if self.writer:
                 writer = self.writer
             else:
-                from src.tms_eeg.io.writer import Writer
+                from tms_eeg.io.writer import Writer
                 writer = Writer(self.config)
             
             filename = f"tep_{name}_{condition}"
             writer.save_figure(fig, filename)
+
+    def plot_evoked_by_symbol(
+        self,
+        epochs: mne.Epochs,
+        picks: Optional[List[str]] = None,
+        xlim: tuple = None,
+        ylim: tuple = None,
+    ):
+        """
+        Plota overlay dos evokeds médios por símbolo (8bit 0, 1, 2) para canais selecionados.
+
+        Parameters
+        ----------
+        epochs : mne.Epochs
+            Objeto epochs filtrado com event IDs 1, 2, 3.
+        picks : list[str], optional
+            Canais a plotar. Default: roi_picks do config.
+        xlim : tuple, optional
+            Janela temporal em segundos. Default: tep_xlim do config.
+        ylim : tuple, optional
+            Limites do eixo Y em µV. Default: None (autoescala).
+        """
+        if self.config and not self.config.plots.analysis_plots:
+            return
+
+        picks = picks or self.roi_picks
+        xlim_ms = tuple(v * 1e3 for v in (xlim or self.xlim))
+
+        event_to_symbol = self.config.analysis.event_to_symbol  # {1: 0, 2: 1, 3: 2}
+
+        # Mapa inverso: event_id -> nome da condição (apenas dos eids relevantes)
+        eid_to_cond = {v: k for k, v in epochs.event_id.items()}
+
+        # Calcula evokeds por símbolo, já ordenados por símbolo (0, 1, 2)
+        evokeds = {}
+        for eid, symbol in sorted(event_to_symbol.items(), key=lambda x: x[1]):
+            cond = eid_to_cond.get(eid)
+            if cond is None:
+                continue
+            evokeds[f"8bit {symbol}"] = epochs[cond].average(picks="eeg")
+
+        if not evokeds:
+            print("Nenhuma condição encontrada para plotar.")
+            return
+
+        colors = ["#1f77b4", "#ff7f0e", "#2ca02c"]
+        labels = list(evokeds.keys())
+        times_ms = next(iter(evokeds.values())).times * 1e3  # eixo X compartilhado
+
+        # Pré-extrai os dados de todos os canais de uma vez (evita .copy().pick() em loop)
+        ch_data = {
+            label: {
+                ch: evk.data[evk.ch_names.index(ch)] * 1e6
+                for ch in picks if ch in evk.ch_names
+            }
+            for label, evk in evokeds.items()
+        }
+
+        for ch in picks:
+            fig, ax = plt.subplots(figsize=(9, 4))
+            for i, label in enumerate(labels):
+                data = ch_data[label].get(ch)
+                if data is None:
+                    continue
+                ax.plot(
+                    times_ms,
+                    data,
+                    label=label,
+                    color=colors[i % len(colors)],
+                    linewidth=1.4,
+                )
+            ax.set_xlim(xlim_ms)
+            if ylim is not None:
+                ax.set_ylim(ylim)
+            ax.set_xlabel("Time (ms)")
+            ax.set_ylabel("Amplitude (µV)")
+            ax.set_title(f"Average TEP by Symbol — {ch}")
+            ax.legend(fontsize=9)
+            ax.axhline(0, color="gray", ls="--", lw=0.5)
+            ax.axvline(0, color="gray", ls="--", lw=0.5)
+            fig.tight_layout()
+            plt.show()
+            plt.close(fig)
 
     def plot_mean_tep(
         self,

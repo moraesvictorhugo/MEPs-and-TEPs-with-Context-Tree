@@ -1,5 +1,5 @@
 import mne
-from src.tms_eeg.config.settings import ProjectConfig
+from tms_eeg.config.settings import ProjectConfig
 
 class Downsampler:
     def __init__(self, config: ProjectConfig):

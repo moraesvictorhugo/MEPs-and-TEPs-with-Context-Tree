@@ -1,7 +1,6 @@
 import mne
 import numpy as np
-from src.tms_eeg.config.settings import ProjectConfig
-
+from tms_eeg.config.settings import ProjectConfig
 
 class EEGEpocher:
     def __init__(self, config: ProjectConfig):
@@ -97,4 +96,15 @@ class EEGEpocher:
             flat=None
         )
 
+        return epochs
+
+class EpochDropper:
+    def __init__(self, config: ProjectConfig):
+        self.config = config
+
+    def drop_from_json(self, epochs: mne.Epochs, json_path: str) -> mne.Epochs:
+        import json
+        with open(json_path) as f:
+            idx = json.load(f).get(self.config.subject_id, [])
+        epochs.drop(idx)
         return epochs

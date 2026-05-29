@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 @dataclass
 class IOConfig:
     export_data: bool = True
-    save_figs: bool = False
+    save_figs: bool = True
 
 @dataclass
 class EventConfig:
@@ -20,16 +20,15 @@ class EventConfig:
 
 @dataclass
 class ArtifactConfig:
-    window_removal_artifact: tuple = (-0.005, 0.010)
+    window_removal_artifact: tuple = (-0.002, 0.015)
     mode_removal_artifact: str = 'cubic'
     anchor_window_ms: float = 5.0
 
 @dataclass
 class FilterConfig:
-    eeg_bandpass: tuple = (1, 250)
+    eeg_bandpass: tuple = (None, 80)
     emg_bandpass: tuple = (20, 500)
     notch: tuple = (60, 120, 180, 240, 300)
-    eeg_bandpass_epochs: tuple = (None, 45)
 
 @dataclass
 class ChannelConfig:
@@ -41,8 +40,8 @@ class ChannelConfig:
 @dataclass
 class EpochConfig:
     window: tuple = (-0.8, 0.8)
-    baseline: tuple = (-0.5, -0.01)
-    downsample_freq: float = 725.0
+    baseline: tuple = (-0.2, -0.01)
+    downsample_freq: float = 1000.0
     emg_downsample_freq: float = 3000.0
 
 @dataclass

@@ -1,17 +1,17 @@
 """Main analysis pipeline for TMS-EEG data."""
 
-# Set backend
-from src.tms_eeg.config.environment import setup_plotting_backend
-setup_plotting_backend()
+from tms_eeg.config.settings import ProjectConfig
+from tms_eeg.io.reader import load_data, get_raw_path
+from tms_eeg.io.writer import Writer
+from tms_eeg.analysis.features import FeatureExtractor
+from tms_eeg.analysis.context import ContextMapper
+from tms_eeg.analysis.group import MetricsCollector
+from tms_eeg.visualization.tep_plots import TEPPlotter
+from tms_eeg.visualization.gfp_plots import MFPPlotter
 
-from src.tms_eeg.config.settings import ProjectConfig
-from src.tms_eeg.io.reader import load_data, get_raw_path
-from src.tms_eeg.io.writer import Writer
-from src.tms_eeg.analysis.features import FeatureExtractor
-from src.tms_eeg.analysis.context import ContextMapper
-from src.tms_eeg.analysis.group import MetricsCollector
-from src.tms_eeg.visualization.tep_plots import TEPPlotter
-from src.tms_eeg.visualization.gfp_plots import MFPPlotter
+# Set backend
+from tms_eeg.config.environment import setup_plotting_backend
+setup_plotting_backend()
 
 collector = MetricsCollector()
 subjects = ProjectConfig().analysis.subjects
