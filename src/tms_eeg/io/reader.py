@@ -21,7 +21,7 @@ def load_data(config: ProjectConfig, data_type: str = "raw"):
         data = mne.io.read_raw_bdf(file_path, preload=True)
 
     elif data_type == "epochs":
-        subject_dir = base_dir / "data" / "processed" / f"{config.subject_id}" / "processed"
+        subject_dir = base_dir / "data" / "processed" / f"{config.subject_id}" / "processed_full"
         file_path = next(subject_dir.glob("*_epochs_processed.fif"))
         data = mne.read_epochs(file_path, preload=True)
 
@@ -31,13 +31,13 @@ def load_data(config: ProjectConfig, data_type: str = "raw"):
     return data
 
 def get_raw_path(config: ProjectConfig) -> str:
-    """Retorna o caminho do arquivo raw processado para o sujeito."""
+    """Retorna o caminho do arquivo .bdf raw original para o sujeito."""
     base_dir = Path(__file__).parents[3]
-    raw_dir = base_dir / "data" / "processed" / config.subject_id / "processed"
+    raw_dir = base_dir / "data" / "raw" / f"{config.subject_id}_data"
 
-    fif_files = list(raw_dir.glob("*_raw_processed.fif"))
-    if not fif_files:
+    bdf_files = list(raw_dir.glob("*.bdf"))
+    if not bdf_files:
         raise FileNotFoundError(
-            f"Nenhum .fif encontrado em {raw_dir}"
+            f"Nenhum .bdf encontrado em {raw_dir}"
         )
-    return str(fif_files[0])
+    return str(bdf_files[0])

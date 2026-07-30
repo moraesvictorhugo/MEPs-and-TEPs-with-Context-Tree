@@ -2,8 +2,8 @@ from dataclasses import dataclass, field
 
 @dataclass
 class IOConfig:
-    export_data: bool = True
-    save_figs: bool = True
+    export_data: bool = False
+    save_figs: bool = False
 
 @dataclass
 class EventConfig:
@@ -52,7 +52,7 @@ class ICAConfig:
 @dataclass
 class AnalysisConfig:
     subjects: list = field(default_factory=lambda: [
-        "V02", "V03", "V04", "V05", "V06", "V07"])
+        "V04", "V05", "V04", "V07", "V08", "V09"])
     channels_of_interest: list = field(default_factory=lambda: [
         "FC1", "FC5", "C3", "CP1", "CP5"])
     time_windows: dict = field(default_factory=lambda: {
